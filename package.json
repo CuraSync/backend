@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "This includes the backend application code",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "contributors": [
+    "Neth Botheju <nethbotheju@gmail.com> (https://github.com/nethbotheju)",
+    "Venul Minsara <minsaravenul@gmail.com> (https://github.com/menulVIN)"
+  ],
+  "license": "ISC"
+}
