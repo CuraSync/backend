@@ -10,6 +10,8 @@ const authController = require("./controllers/auth");
 const protectedController = require("./controllers/protected");
 const authenticateToken = require("./middleware/authenticateToken");
 
+const doctorController = require("./controllers/doctor");
+
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -28,6 +30,19 @@ app.post("/logout/all", authenticateToken, authController.logoutAll);
 app.get("/protected", authenticateToken, protectedController.protectedRoute);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
+
+// Doctor routes
+app.post("/doctor/register", doctorController.doctorRegister);
+app.post(
+  "/doctor/profile",
+  authenticateToken,
+  doctorController.doctorProfileUpdate
+);
+app.get(
+  "/doctor/profile",
+  authenticateToken,
+  doctorController.getDoctorProfile
+);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
