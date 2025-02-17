@@ -18,6 +18,6 @@ const labSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Laboratory", labSchema, "laboratory");
+module.exports = mongoose.model("Laboratory", labSchema, "laboratories");
 
 module.exports = Doctor;

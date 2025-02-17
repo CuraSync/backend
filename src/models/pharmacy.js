@@ -18,6 +18,6 @@ const pharmacySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Pharmacy", pharmacySchema, "pharmacy");
+module.exports = mongoose.model("Pharmacy", pharmacySchema, "pharmacies");
 
 module.exports = Doctor;
