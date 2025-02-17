@@ -77,15 +77,14 @@ const login = async (req, res) => {
 };
 
 const refresh = async (req, res) => {
-  const { deviceId } = req.body;
-  if (!deviceId) return res.status(400).json({ message: "Device ID required" });
+  const { deviceId, id } = req.body;
+  if (!deviceId || !id)
+    return res.status(400).json({ message: "Required fields are missing" });
 
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.status(401).json({ message: "Unauthorized" });
 
-  const storedToken = await redisClient.get(
-    `refresh:${req.body.id}:${deviceId}`
-  );
+  const storedToken = await redisClient.get(`refresh:${id}:${deviceId}`);
   if (!storedToken || storedToken !== refreshToken)
     return res.status(403).json({ message: "Forbidden" });
 
@@ -118,7 +117,8 @@ const refresh = async (req, res) => {
 
 const logout = async (req, res) => {
   const { id, deviceId } = req.body;
-  if (!deviceId) return res.status(400).json({ message: "Device ID required" });
+  if (!deviceId || !id)
+    return res.status(400).json({ message: "Required fields are missing" });
 
   await redisClient.del(`refresh:${id}:${deviceId}`);
   res.clearCookie("refreshToken");
@@ -127,6 +127,8 @@ const logout = async (req, res) => {
 
 const logoutAll = async (req, res) => {
   const { id } = req.body;
+  if (!id)
+    return res.status(400).json({ message: "Required fields are missing" });
   const keys = await redisClient.keys(`refresh:${id}:*`);
   for (const key of keys) {
     await redisClient.del(key);
