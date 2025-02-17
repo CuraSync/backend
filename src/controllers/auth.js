@@ -17,19 +17,54 @@ const publicKey = fs.readFileSync(
 );
 
 const login = async (req, res) => {
-  const { id, password, deviceId } = req.body;
-  if (!deviceId) return res.status(400).json({ message: "Device ID required" });
+  const { password, deviceId, credential_type, credential_data, role } =
+    req.body;
 
-  const user = await Doctor.findOne({ id }).exec();
+  if (!deviceId || !password || !role || !credential_type || !credential_data)
+    return res.status(400).json({ message: "Required fields are missing" });
+
+  let user;
+  if (role === "doctor") {
+    const usersCollection = Doctor;
+    if (credential_type === "id") {
+      user = await usersCollection.findOne({ id: credential_data });
+    } else if (credential_type === "email") {
+      user = await usersCollection.findOne({ email: credential_data });
+    }
+  } else if (role === "patient") {
+    // const usersCollection = database.collection("patients");
+    if (credential_type === "id") {
+      // user = await usersCollection.findOne({ id: credential_data });
+    } else if (credential_type === "email") {
+      // user = await usersCollection.findOne({ email: credential_data });
+    }
+  } else if (role === "pharmacy") {
+    // const usersCollection = database.collection("pharmacies");
+    if (credential_type === "id") {
+      // user = await usersCollection.findOne({ id: credential_data });
+    } else if (credential_type === "email") {
+      // user = await usersCollection.findOne({ email: credential_data });
+    }
+  } else if (role === "lab") {
+    // const usersCollection = database.collection("labs");
+    if (credential_type === "id") {
+      // user = await usersCollection.findOne({ id: credential_data });
+    } else if (credential_type === "email") {
+      // user = await usersCollection.findOne({ email: credential_data });
+    }
+  } else {
+    return res.status(400).send({ message: "Invalid role" });
+  }
+
   if (!user) return res.status(400).json({ message: "User not found" });
 
   const validPassword = await bcrypt.compare(password, user.password);
   if (!validPassword)
     return res.status(401).json({ message: "Invalid credentials" });
 
-  const accessToken = generateAccessToken({ id: user.id, role: user.role });
+  const accessToken = generateAccessToken({ id: user.id, role: role });
   const refreshToken = await generateRefreshToken(
-    { id: user.id, role: user.role },
+    { id: user.id, role: role },
     deviceId,
     redisClient
   );
