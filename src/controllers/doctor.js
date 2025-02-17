@@ -91,12 +91,9 @@ const doctorProfileUpdate = async (req, res) => {
     }
   });
 
-  console.log(updateData);
-  console.log(doctorId);
-
   try {
     await Doctor.updateOne({ doctorId }, { $set: updateData });
-    res.status(201).json({ message: "Doctor update profile successfull" });
+    res.status(200).json({ message: "Doctor update profile successfull" });
   } catch (error) {
     res
       .status(500)
@@ -104,4 +101,16 @@ const doctorProfileUpdate = async (req, res) => {
   }
 };
 
-module.exports = { doctorRegister, doctorProfileUpdate };
+const getDoctorProfile = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const user = await Doctor.findOne({ doctorId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.status(200).json(user);
+};
+
+module.exports = { doctorRegister, doctorProfileUpdate, getDoctorProfile };

@@ -29,10 +29,14 @@ const login = async (req, res) => {
     const usersCollection = Doctor;
     if (credential_type === "id") {
       user = await usersCollection.findOne({ doctorId: credential_data });
-      id = user.doctorId;
+      if (user) {
+        id = user.doctorId;
+      }
     } else if (credential_type === "email") {
       user = await usersCollection.findOne({ email: credential_data });
-      id = user.doctorId;
+      if (user) {
+        id = user.doctorId;
+      }
     }
   } else if (role === "patient") {
     // const usersCollection = database.collection("patients");

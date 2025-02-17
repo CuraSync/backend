@@ -38,6 +38,11 @@ app.post(
   authenticateToken,
   doctorController.doctorProfileUpdate
 );
+app.get(
+  "/doctor/profile",
+  authenticateToken,
+  doctorController.getDoctorProfile
+);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
