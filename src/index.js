@@ -33,6 +33,11 @@ app.listen(5000, () => console.log("Server running on port 5000"));
 
 // Doctor routes
 app.post("/doctor/register", doctorController.doctorRegister);
+app.post(
+  "/doctor/profile",
+  authenticateToken,
+  doctorController.doctorProfileUpdate
+);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");

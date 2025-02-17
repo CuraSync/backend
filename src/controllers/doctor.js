@@ -59,7 +59,9 @@ const doctorRegister = async (req, res) => {
       password: hashPassword,
       phoneNumber: req.body.phoneNumber,
     });
-    res.status(201).json({ message: "Doctor registered successfully" });
+    res
+      .status(201)
+      .json({ message: "Doctor registered successfully", doctorId: doctorId });
   } catch (error) {
     res
       .status(500)
@@ -75,4 +77,31 @@ const generateDoctorId = (nic) => {
   return `D${randomNum}${uniquePartNic}`;
 };
 
-module.exports = { doctorRegister };
+const doctorProfileUpdate = async (req, res) => {
+  const doctorId = req.user.id;
+  const updateData = req.body;
+
+  // List of fields to remove if they exist
+  const fieldsToRemove = ["password", "email", "nic", "id"];
+
+  // Remove fields from updateData if they exist
+  fieldsToRemove.forEach((field) => {
+    if (updateData.hasOwnProperty(field)) {
+      delete updateData[field];
+    }
+  });
+
+  console.log(updateData);
+  console.log(doctorId);
+
+  try {
+    await Doctor.updateOne({ doctorId }, { $set: updateData });
+    res.status(201).json({ message: "Doctor update profile successfull" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+module.exports = { doctorRegister, doctorProfileUpdate };
