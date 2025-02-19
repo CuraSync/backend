@@ -9,15 +9,15 @@ const pharmacySchema = new mongoose.Schema(
     password: { type: String, required: true },
     phoneNumber: { type: String, required: true },
     location: { type: String, required: true },
-    description: { type: String },
-    operatingHours: { type: String },
-    rating: { type: Number, min: 0, max: 5 },
-    profilePic: { type: String },
-    contactInformation: { type: String },
+    description: { type: String, default: null },
+    operatingHours: { type: String, default: null },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    profilePic: { type: String, default: null },
+    contactInformation: { type: [String], default: [] },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Pharmacy", pharmacySchema, "pharmacies");
+const Pharmacy = mongoose.model("Pharmacy", pharmacySchema, "pharmacies");
 
-module.exports = Doctor;
+module.exports = Pharmacy;
