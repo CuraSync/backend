@@ -56,7 +56,7 @@ const patientRegister = async (req, res) => {
         });   
         res
             .status(201)
-            .json({message: "Patient created successfully"});
+            .json({message: "Patient created successfully",patientId: patientId});
 
     } catch (error) {
         res
@@ -71,4 +71,30 @@ const generatePatientId = (nic) => {
     return `PA${randomNum}${uniqueNic}`;
 };
 
-module.exports = {patientRegister};
+const patientProfileUpdate = async (req, res) => {
+    const patientId = req.user.id;
+    const updateData = req.body;
+
+    // List of fields to remove if they exist
+    const fieldsToRemove = ["email", "nic", "password", "id", "dateOfBirth"];
+
+    // Remove the fields from the update data
+    fieldsToRemove.forEach((field) => {
+        if (updateData.hasOwnProperty(field)) {
+            delete updateData[field];
+        }
+    });
+    try{
+        await Patient.updateOne({patientId}, {$set: updateData});
+        res.status(200).json({message: "Patient profile updated successfully"});
+    }catch(error){
+        res
+            .status(500)
+            .json({message: "Unexpected error occurred", error: error.message});
+    }
+    
+};
+
+
+
+module.exports = {patientRegister, patientProfileUpdate};

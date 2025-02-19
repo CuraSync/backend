@@ -46,7 +46,15 @@ app.get(
 );
 
 //Patient routes
-app.post("/patient/register", patientController.patientRegister);
+app.post(
+  "/patient/register",
+  patientController.patientRegister);
+  
+app.post(
+  "/patient/profile",
+  authenticateToken,
+  patientController.patientProfileUpdate
+);
 
 
 // Tests Area
