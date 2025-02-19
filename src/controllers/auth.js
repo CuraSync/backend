@@ -12,6 +12,7 @@ const {
 const Doctor = require("../models/doctor");
 const Patient = require("../models/patient");
 const Pharmacy = require("../models/pharmacy");
+const Laboratory = require("../models/laboratory");
 
 const publicKey = fs.readFileSync(
   path.join(process.env.JWT_PUBLIC_KEY_PATH),

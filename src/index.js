@@ -86,8 +86,14 @@ app.get(
 
 // Laboratory routes
 app.post("/laboratory/register",
-  laboratoryController.laboratoryRegister);
-  
+  laboratoryController.laboratoryRegister
+);
+
+app.post(
+  "/laboratory/profile",
+  authenticateToken,
+  laboratoryController.laboratoryProfileUpdate
+);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");

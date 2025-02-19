@@ -66,4 +66,32 @@ const generateLabId = (licenceNumber) => {
     return `L${randomNum}${uniqueLicenceNumber}`;
 };
 
-module.exports = {laboratoryRegister};
+const laboratoryProfileUpdate = async (req, res) => {
+    const labId = req.user.id;
+    const updateData = req.body;
+
+    //List of fields to be deleted
+    const fieldsToDelete = [
+        "labId",
+        "email",
+        "licenceNumber",
+        "password"];
+
+    //Deleting the fields
+    fieldsToDelete.forEach((field) => {
+        if(updateData.hasOwnProperty(field)){
+            delete updateData[field];
+        }
+    }); 
+    try{
+        await Laboratory.updateOne({labId}, {$set: updateData}); 
+        res
+            .status(200)
+            .json({message: "Profile updated successfully"});   
+    }catch(err){     
+        res
+            .status(500)
+            .json({message: "Unexpected Error Occurred", error: err.message});
+    }        
+};
+module.exports = {laboratoryRegister, laboratoryProfileUpdate};
