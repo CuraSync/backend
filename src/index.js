@@ -13,6 +13,7 @@ const authenticateToken = require("./middleware/authenticateToken");
 const doctorController = require("./controllers/doctor");
 const patientController = require("./controllers/patient");
 const pharmacyController = require("./controllers/pharmacy");
+const laboratoryController = require("./controllers/laboratory");
 
 const app = express();
 app.use(express.json());
@@ -81,6 +82,12 @@ app.get(
   authenticateToken,
   pharmacyController.getPharmacyProfile
 ); 
+
+
+// Laboratory routes
+app.post("/laboratory/register",
+  laboratoryController.laboratoryRegister);
+  
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
