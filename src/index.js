@@ -13,6 +13,7 @@ const authenticateToken = require("./middleware/authenticateToken");
 const doctorController = require("./controllers/doctor");
 const patientController = require("./controllers/patient");
 const pharmacyController = require("./controllers/pharmacy");
+const laboratoryController = require("./controllers/laboratory");
 
 const app = express();
 app.use(express.json());
@@ -81,6 +82,24 @@ app.get(
   authenticateToken,
   pharmacyController.getPharmacyProfile
 ); 
+
+
+// Laboratory routes
+app.post("/laboratory/register",
+  laboratoryController.laboratoryRegister
+);
+
+app.post(
+  "/laboratory/profile",
+  authenticateToken,
+  laboratoryController.laboratoryProfileUpdate
+);
+
+app.get(
+  "/laboratory/profile",
+  authenticateToken,
+  laboratoryController.getLaboratoryProfile
+);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");

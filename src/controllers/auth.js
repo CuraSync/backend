@@ -12,6 +12,7 @@ const {
 const Doctor = require("../models/doctor");
 const Patient = require("../models/patient");
 const Pharmacy = require("../models/pharmacy");
+const Laboratory = require("../models/laboratory");
 
 const publicKey = fs.readFileSync(
   path.join(process.env.JWT_PUBLIC_KEY_PATH),
@@ -67,11 +68,17 @@ const login = async (req, res) => {
       }
     }
   } else if (role === "lab") {
-    // const usersCollection = database.collection("labs");
+    const usersCollection = Laboratory;
     if (credential_type === "id") {
-      // user = await usersCollection.findOne({ labId: credential_data });
+      user = await usersCollection.findOne({ labId: credential_data });
+      if (user) {
+        id = user.labId;
+      }
     } else if (credential_type === "email") {
-      // user = await usersCollection.findOne({ email: credential_data });
+      user = await usersCollection.findOne({ email: credential_data });
+      if (user) {
+        id = user.labId;
+      }
     }
   } else {
     return res.status(400).send({ message: "Invalid role" });
