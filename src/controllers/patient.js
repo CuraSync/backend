@@ -95,6 +95,18 @@ const patientProfileUpdate = async (req, res) => {
     
 };
 
+const getPatientProfile = async (req, res) => {
+    const patientId = req.user.id;
+    
+        const patient = await Patient.findOne({patientId}).select("-password -_id");
+        res.status(200).json(patient);
+    
+        if(!patient){
+            return res.status(404).json({message: "Patient not found"});
+        }
 
+        res.status(200).json(patient);
+    
+};
 
-module.exports = {patientRegister, patientProfileUpdate};
+module.exports = {patientRegister, patientProfileUpdate, getPatientProfile};

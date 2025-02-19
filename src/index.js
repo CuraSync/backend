@@ -56,6 +56,12 @@ app.post(
   patientController.patientProfileUpdate
 );
 
+app.get(
+  "/patient/profile",
+  authenticateToken,
+  patientController.getPatientProfile
+);
+
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
