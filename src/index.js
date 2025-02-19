@@ -36,7 +36,7 @@ app.listen(5000, () => console.log("Server running on port 5000"));
 // Doctor routes
 app.post("/doctor/register",
   doctorController.doctorRegister);
-  
+
 app.post(
   "/doctor/profile",
   authenticateToken,
@@ -67,7 +67,14 @@ app.get(
 
 // Pharmacy routes
 app.post("/pharmacy/register",
-  pharmacyController.pharmacyRegister);
+  pharmacyController.pharmacyRegister
+);
+
+app.post(
+  "/pharmacy/profile",
+  authenticateToken,
+  pharmacyController.pharmacyProfileUpdate
+);  
 
 
 // Tests Area

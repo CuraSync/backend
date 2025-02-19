@@ -65,4 +65,35 @@ const generatePharmacyId = (licenceNumber) => {
     return `PH${randomNum}${uniqueLicenceNumber}`;
 };
 
-module.exports = {pharmacyRegister};
+const pharmacyProfileUpdate = async (req, res) => {
+    const pharmacyId = req.user.id;
+    const updateData = req.body;
+
+    //List of fields to be deleted
+    const fieldsToRemove = [
+        "pharmacyId",
+        "email",
+        "licenceNumber",
+        "password"];
+
+    //remove the fields from the data
+    fieldsToRemove.forEach((field) => {
+        if (updateData.hasOwnProperty(field)) {
+            delete updateData[field];
+        }
+
+    });
+    try{
+        await Pharmacy.updateOne({pharmacyId}, {$set: updateData});
+        res
+            .status(200)
+            .json({message: "Pharmacy updated successfully"});
+    }catch{
+        res
+            .status(500)
+            .json({message: "Unexpected error occurred", error: error.message});
+    }
+};
+
+
+module.exports = {pharmacyRegister, pharmacyProfileUpdate};
