@@ -10,6 +10,7 @@ const {
 } = require("../config/jwtUtils");
 
 const Doctor = require("../models/doctor");
+const Patient = require("../models/patient");
 
 const publicKey = fs.readFileSync(
   path.join(process.env.JWT_PUBLIC_KEY_PATH),
@@ -39,11 +40,17 @@ const login = async (req, res) => {
       }
     }
   } else if (role === "patient") {
-    // const usersCollection = database.collection("patients");
+    const usersCollection = Patient;
     if (credential_type === "id") {
-      // user = await usersCollection.findOne({ patientId: credential_data });
+      user = await usersCollection.findOne({ patientId: credential_data });
+      if (user) {
+        id = user.patientId;
+      }
     } else if (credential_type === "email") {
-      // user = await usersCollection.findOne({ email: credential_data });
+      user = await usersCollection.findOne({ email: credential_data });
+      if (user) {
+        id = user.doctorId;
+      }
     }
   } else if (role === "pharmacy") {
     // const usersCollection = database.collection("pharmacies");

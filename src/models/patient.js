@@ -11,20 +11,20 @@ const patientSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phoneNumber: { type: String, required: true },
     address: { type: String, required: true },
-    dateOfBirth: { type: Date, required: true },
-    height: { type: Number },
-    weight: { type: Number },
-    bmi: { type: Number },
-    bloodType: { type: String },
+    dateOfBirth: { type: Date, required: true, immutable: true },
+    height: { type: Number, default: null },
+    weight: { type: Number, default: null },
+    bmi: { type: Number, default: null },
+    bloodType: { type: String, default: null },
     medicationAllergies: { type: [String], default: [] },
-    guardianName: { type: String },
-    guardianContactNumber: { type: String },
-    guardianEmail: { type: String },
-    profilePic: { type: String },
+    guardianName: { type: String, default: null },
+    guardianContactNumber: { type: String, default: null },
+    guardianEmail: { type: String, default: null },
+    profilePic: { type: String, default: null },
   },
   { timestamps: true }
 );
 
-const Doctor = mongoose.model("Patient", patientSchema, "patients");
+const Patient = mongoose.model("Patient", patientSchema, "patients");
 
-module.exports = Doctor;
+module.exports = Patient;
