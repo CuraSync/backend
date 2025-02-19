@@ -39,11 +39,17 @@ const login = async (req, res) => {
       }
     }
   } else if (role === "patient") {
-    // const usersCollection = database.collection("patients");
+    const usersCollection = database.collection("patients");
     if (credential_type === "id") {
-      // user = await usersCollection.findOne({ patientId: credential_data });
+      user = await usersCollection.findOne({ patientId: credential_data });
+      if (user) {
+        id = user.patientId;
+      }
     } else if (credential_type === "email") {
-      // user = await usersCollection.findOne({ email: credential_data });
+      user = await usersCollection.findOne({ email: credential_data });
+      if (user) {
+        id = user.doctorId;
+      }
     }
   } else if (role === "pharmacy") {
     // const usersCollection = database.collection("pharmacies");

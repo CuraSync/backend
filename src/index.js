@@ -11,6 +11,7 @@ const protectedController = require("./controllers/protected");
 const authenticateToken = require("./middleware/authenticateToken");
 
 const doctorController = require("./controllers/doctor");
+const patientController = require("./controllers/patient");
 
 const app = express();
 app.use(express.json());
@@ -43,6 +44,10 @@ app.get(
   authenticateToken,
   doctorController.getDoctorProfile
 );
+
+//Patient routes
+app.post("/patient/register", patientController.patientRegister);
+
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
