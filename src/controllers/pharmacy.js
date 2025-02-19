@@ -95,5 +95,14 @@ const pharmacyProfileUpdate = async (req, res) => {
     }
 };
 
+const getPharmacyProfile = async (req, res) => {
+    const pharmacyId = req.user.id;
+        const pharmacy = await Pharmacy.findOne({pharmacyId}).select("-password -_id");
+        res.status(200).json(pharmacy);
+    if(!pharmacy){
+        res.status(404).json({message: "Pharmacy not found"});
+    }
+    res.status(200).json(pharmacy);
+};
 
-module.exports = {pharmacyRegister, pharmacyProfileUpdate};
+module.exports = {pharmacyRegister, pharmacyProfileUpdate,getPharmacyProfile};

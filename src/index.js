@@ -76,6 +76,11 @@ app.post(
   pharmacyController.pharmacyProfileUpdate
 );  
 
+app.get(
+  "/pharmacy/profile",
+  authenticateToken,
+  pharmacyController.getPharmacyProfile
+); 
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
