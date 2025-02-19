@@ -95,6 +95,12 @@ app.post(
   laboratoryController.laboratoryProfileUpdate
 );
 
+app.get(
+  "/laboratory/profile",
+  authenticateToken,
+  laboratoryController.getLaboratoryProfile
+);
+
 // Tests Area
 const jwtTets = require("./test/jwtTests");
 app.get("/test/refresh-tokens", jwtTets.jwtRTokens);

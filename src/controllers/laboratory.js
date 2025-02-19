@@ -94,4 +94,21 @@ const laboratoryProfileUpdate = async (req, res) => {
             .json({message: "Unexpected Error Occurred", error: err.message});
     }        
 };
-module.exports = {laboratoryRegister, laboratoryProfileUpdate};
+
+const getLaboratoryProfile = async (req, res) => {
+    const labId = req.user.id;
+    const lab = await Laboratory.findOne({labId}).select("-password -_id");
+    res
+        .status(200)
+        .json(lab);
+    if(!lab){
+        res
+            .status(404)
+            .json({message: "Lab not found"});
+    }    
+    res
+        .status(200)
+        .json(lab);
+};
+
+module.exports = {laboratoryRegister, laboratoryProfileUpdate, getLaboratoryProfile};
