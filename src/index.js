@@ -12,6 +12,7 @@ const authenticateToken = require("./middleware/authenticateToken");
 
 const doctorController = require("./controllers/doctor");
 const patientController = require("./controllers/patient");
+const pharmacyController = require("./controllers/pharmacy");
 
 const app = express();
 app.use(express.json());
@@ -33,7 +34,9 @@ app.get("/protected", authenticateToken, protectedController.protectedRoute);
 app.listen(5000, () => console.log("Server running on port 5000"));
 
 // Doctor routes
-app.post("/doctor/register", doctorController.doctorRegister);
+app.post("/doctor/register",
+  doctorController.doctorRegister);
+  
 app.post(
   "/doctor/profile",
   authenticateToken,
@@ -61,6 +64,10 @@ app.get(
   authenticateToken,
   patientController.getPatientProfile
 );
+
+// Pharmacy routes
+app.post("/pharmacy/register",
+  pharmacyController.pharmacyRegister);
 
 
 // Tests Area
