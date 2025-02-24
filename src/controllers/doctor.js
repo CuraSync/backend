@@ -157,10 +157,45 @@ const addPatient = async (req, res) => {
   }
 };
 
+const getPatientList = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const doctorPatients = await DoctorPatient.find({ doctorId }).select(
+      "-_id -doctorId -createdAt -updatedAt -__v"
+    );
+
+    if (!doctorPatients.length) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    const patients = [];
+    for (const doctorPatient of doctorPatients) {
+      const patientDetails = await Patient.findOne({
+        patientId: doctorPatient.patientId,
+      }).select("firstName lastName profilePic -_id");
+      if (patientDetails) {
+        const patient = {
+          ...doctorPatient.toObject(),
+          ...patientDetails.toObject(),
+        };
+        patients.push(patient);
+      }
+    }
+
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
   getDoctorProfile,
   getDoctorHomepageData,
   addPatient,
+  getPatientList,
 };
