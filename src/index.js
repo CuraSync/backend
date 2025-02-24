@@ -35,8 +35,7 @@ app.get("/protected", authenticateToken, protectedController.protectedRoute);
 app.listen(5000, () => console.log("Server running on port 5000"));
 
 // Doctor routes
-app.post("/doctor/register",
-  doctorController.doctorRegister);
+app.post("/doctor/register", doctorController.doctorRegister);
 
 app.post(
   "/doctor/profile",
@@ -49,11 +48,15 @@ app.get(
   doctorController.getDoctorProfile
 );
 
+app.get(
+  "/doctor/home",
+  authenticateToken,
+  doctorController.getDoctorHomepageData
+);
+
 //Patient routes
-app.post(
-  "/patient/register",
-  patientController.patientRegister);
-  
+app.post("/patient/register", patientController.patientRegister);
+
 app.post(
   "/patient/profile",
   authenticateToken,
@@ -67,27 +70,22 @@ app.get(
 );
 
 // Pharmacy routes
-app.post("/pharmacy/register",
-  pharmacyController.pharmacyRegister
-);
+app.post("/pharmacy/register", pharmacyController.pharmacyRegister);
 
 app.post(
   "/pharmacy/profile",
   authenticateToken,
   pharmacyController.pharmacyProfileUpdate
-);  
+);
 
 app.get(
   "/pharmacy/profile",
   authenticateToken,
   pharmacyController.getPharmacyProfile
-); 
-
+);
 
 // Laboratory routes
-app.post("/laboratory/register",
-  laboratoryController.laboratoryRegister
-);
+app.post("/laboratory/register", laboratoryController.laboratoryRegister);
 
 app.post(
   "/laboratory/profile",

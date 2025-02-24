@@ -113,4 +113,21 @@ const getDoctorProfile = async (req, res) => {
   res.status(200).json(user);
 };
 
-module.exports = { doctorRegister, doctorProfileUpdate, getDoctorProfile };
+const getDoctorHomepageData = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const user = await Doctor.findOne({ doctorId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.status(200).json(user);
+};
+
+module.exports = {
+  doctorRegister,
+  doctorProfileUpdate,
+  getDoctorProfile,
+  getDoctorHomepageData,
+};
