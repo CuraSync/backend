@@ -58,6 +58,12 @@ app.post("/patient", authenticateToken, doctorController.addPatient);
 
 app.get("/doctor/patient", authenticateToken, doctorController.getPatientList);
 
+app.post(
+  "/patient/enableMessage",
+  authenticateToken,
+  doctorController.enablePatientMessage
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
