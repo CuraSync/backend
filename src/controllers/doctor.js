@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
 
 const Doctor = require("../models/doctor");
+const DoctorPatient = require("../models/doctorPatient");
+const Patient = require("../models/patient");
 
 const doctorRegister = async (req, res) => {
   if (
@@ -113,4 +115,121 @@ const getDoctorProfile = async (req, res) => {
   res.status(200).json(user);
 };
 
-module.exports = { doctorRegister, doctorProfileUpdate, getDoctorProfile };
+const getDoctorHomepageData = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const user = await Doctor.findOne({ doctorId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.status(200).json(user);
+};
+
+const addPatient = async (req, res) => {
+  const doctorId = req.user.id;
+  const { patientId } = req.body;
+
+  if (!patientId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const patient = await Patient.findOne({ patientId });
+  if (!patient) {
+    return res.status(404).json({ message: "Invalid patient" });
+  }
+
+  const existingDoctorPatient = await DoctorPatient.findOne({
+    doctorId,
+    patientId,
+  });
+  if (existingDoctorPatient)
+    return res.status(409).json({ message: "Patient is already in the list" });
+
+  try {
+    await DoctorPatient.create({ doctorId, patientId });
+    res.status(200).json({ message: "Patient successfully added to the list" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getPatientList = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const doctorPatients = await DoctorPatient.find({ doctorId }).select(
+      "-_id -doctorId -createdAt -updatedAt -__v"
+    );
+
+    if (!doctorPatients.length) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    const patients = [];
+    for (const doctorPatient of doctorPatients) {
+      const patientDetails = await Patient.findOne({
+        patientId: doctorPatient.patientId,
+      }).select("firstName lastName profilePic -_id");
+      if (patientDetails) {
+        const patient = {
+          ...doctorPatient.toObject(),
+          ...patientDetails.toObject(),
+        };
+        patients.push(patient);
+      }
+    }
+
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const enablePatientMessage = async (req, res) => {
+  const doctorId = req.user.id;
+  const { patientId } = req.body;
+
+  if (!patientId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const patient = await Patient.findOne({ patientId });
+  if (!patient) {
+    return res.status(404).json({ message: "Invalid patient" });
+  }
+
+  const existingDoctorPatient = await DoctorPatient.findOne({
+    doctorId,
+    patientId,
+  });
+  if (!existingDoctorPatient)
+    return res.status(409).json({ message: "Patient not found in the list" });
+
+  try {
+    await DoctorPatient.updateOne(
+      { doctorId, patientId },
+      { messageStatus: true }
+    );
+    res.status(200).json({ message: "Messaging has enables for that patient" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+module.exports = {
+  doctorRegister,
+  doctorProfileUpdate,
+  getDoctorProfile,
+  getDoctorHomepageData,
+  addPatient,
+  getPatientList,
+  enablePatientMessage,
+};
