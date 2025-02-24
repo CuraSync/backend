@@ -54,6 +54,8 @@ app.get(
   doctorController.getDoctorHomepageData
 );
 
+app.post("/patient", authenticateToken, doctorController.addPatient);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
