@@ -112,6 +112,18 @@ const getPharmacyProfile = async (req, res) => {
   res.status(200).json(pharmacy);
 };
 
+const getPharmacyHomepageData = async (req, res) => {
+  const pharmacyId = req.user.id;
+
+  const user = await Pharmacy.findOne({ pharmacyId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "Pharmacy not found" }); 
+  }
+
+  res.status(200).json(user);
+};
+
 // Add encryption/decryption utilities
 const encryptMessage = (message) => {
   const nonce = crypto.randomBytes(NONCE_LENGTH); // Generate a unique nonce
@@ -268,6 +280,7 @@ module.exports = {
   pharmacyRegister,
   pharmacyProfileUpdate,
   getPharmacyProfile,
+  getPharmacyHomepageData,
   pharmacySendMessageToPatient,
   getPharmacyPatientMessages,
 };
