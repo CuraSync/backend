@@ -8,6 +8,9 @@ const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 // Add this import at the top with your other imports
 const PatientLabMessage = require("../models/patientLabMessage");
 const Laboratory = require("../models/laboratory"); // Make sure this exists
+const PatientLab = require("../models/patientLab");
+const PatientPharmacy = require("../models/patientPharmacy");
+const DoctorPatient = require("../models/doctorPatient");
 
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const Pharmacy = require("../models/pharmacy");
@@ -119,6 +122,177 @@ const getPatientProfile = async (req, res) => {
 
   res.status(200).json(patient);
 };
+
+const getPatientHomepageData = async (req, res) => {
+  const patientId = req.user.id;
+
+  const user = await Patient.findOne({ patientId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.status(200).json(user);
+};
+
+const getDoctorList = async (req, res) => {
+  const patientId = req.user.id;
+
+  try{
+    const doctorPatients = await DoctorPatient.find({ patientId }).select(
+      "-_id -patientId -createdAt -updatedAt -__v"
+    );
+
+    if (!doctorPatients.length) {
+      return res.status(404).json({ message: "No doctors found" });
+    }
+
+    const doctors = [];
+    for (const doctorPatient of doctorPatients) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: doctorPatient.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...doctorPatient.toObject(), 
+          ...doctorDetails.toObject()
+        };
+        doctors.push(doctor);
+    }
+  }  
+  
+  res.status(200).json(doctors);
+}catch (error) {
+  res
+    .status(500)
+    .json({ message: "Unexpected error occurred", error: error.message });
+}
+};
+
+const addLabortory = async (req, res) => {
+  const patientId = req.user.id;
+  const { labId } = req.body;
+
+  if (!labId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingLab = await Laboratory.findOne({ labId });
+  if (!existingLab) {
+    return res.status(404).json({ message: "Invalid laboratory" });
+  }
+
+  try {
+    const existingPatientLab = await PatientLab.findOne({ patientId, labId });
+    if (existingPatientLab) {
+      return res.status(409).json({ message: "Lab already added" });
+    }
+
+    await PatientLab.create({ patientId, labId });
+    res.status(201).json({ message: "Lab added successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+
+}
+
+const getLaboratoryList = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const patientLabs = await PatientLab.find({ patientId }).select(
+      "-_id -patientId -createdAt -updatedAt -__v"
+    );
+    
+    if (!patientLabs.length) {
+      return res.status(404).json({ message: "No labs found" });
+    }
+    
+    const labs = [];
+    for (const patientLab of patientLabs) {
+      const labDetails = await Laboratory.findOne({
+        labId: patientLab.labId,
+      }).select("labName profilePic -_id");
+      if (labDetails) {
+        const lab = {
+          ...patientLab.toObject(),
+          ...labDetails.toObject(),
+        };
+        labs.push(lab);
+      }
+    }
+
+    res.status(200).json(labs);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};    
+
+const addPharmacy = async (req, res) => {
+  const patientId = req.user.id;
+  const { pharmacyId } = req.body;
+
+  if (!pharmacyId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingPharmacy = await Pharmacy.findOne({ pharmacyId });
+  if (!existingPharmacy) {
+    return res.status(404).json({ message: "Invalid pharmacy" });
+  }
+  
+  try {
+    const existingPatientPharmacy = await PatientPharmacy.findOne({ patientId, pharmacyId });
+    if (existingPatientPharmacy) {
+      return res.status(409).json({ message: "Pharmacy already added" });
+    }
+    await PatientPharmacy.create({ patientId, pharmacyId });
+    res.status(201).json({ message: "Pharmacy added successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getPharmacyList = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const patientPharmacies = await PatientPharmacy.find({ patientId }).select(
+      "-_id -patientId -createdAt -updatedAt -__v"
+    );
+
+    if (!patientPharmacies.length) {
+      return res.status(404).json({ message: "No pharmacies found" });
+    }
+
+    const pharmacies = [];
+    for (const patientPharmacy of patientPharmacies) {
+      const pharmacyDetails = await Pharmacy.findOne({
+        pharmacyId: patientPharmacy.pharmacyId,
+      }).select("pharmacyName profilePic -_id");
+      if (pharmacyDetails) {
+        const pharmacy = {
+          ...patientPharmacy.toObject(),
+          ...pharmacyDetails.toObject(),
+        };
+        pharmacies.push(pharmacy);
+      }
+    }
+
+    res.status(200).json(pharmacies);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 
 // Message Section
 // Add encryption/decryption utilities
@@ -517,6 +691,12 @@ module.exports = {
   patientRegister,
   patientProfileUpdate,
   getPatientProfile,
+  getPatientHomepageData,
+  getDoctorList,
+  addLabortory,
+  getLaboratoryList,
+  addPharmacy,
+  getPharmacyList,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
   patientSendMessageToLab,

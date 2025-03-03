@@ -111,6 +111,42 @@ app.get(
   patientController.getPatientProfile
 );
 
+app.get(
+  "/patient/home",
+  authenticateToken,
+  patientController.getPatientHomepageData
+);
+
+app.get(
+  "/patient/doctors",
+  authenticateToken,
+  patientController.getDoctorList
+);
+
+app.post(
+  "/laboratory",
+  authenticateToken,
+  patientController.addLabortory
+);
+
+app.get(
+  "/patient/laboratories",
+  authenticateToken,
+  patientController.getLaboratoryList
+);
+
+app.post(
+  "/pharmacy",
+  authenticateToken,
+  patientController.addPharmacy
+);
+
+app.get(
+  "/patient/pharmacies",
+  authenticateToken,
+  patientController.getPharmacyList
+);
+
 // Message part
 app.post(
   "/patient/doctor/sendMessage",
