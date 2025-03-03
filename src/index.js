@@ -72,6 +72,17 @@ app.post(
   doctorController.enablePatientMessage
 );
 
+app.post(
+  "/doctor",
+  authenticateToken,
+  doctorController.addDoctor
+);  
+
+app.get(
+  "/doctor/doctors",
+  authenticateToken, 
+  doctorController.getDoctorList);
+
 // message section
 app.post(
   "/doctor/patient/sendMessage",
