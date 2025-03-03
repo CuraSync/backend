@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const Doctor = require("../models/doctor");
 const DoctorPatient = require("../models/doctorPatient");
 const Patient = require("../models/patient");
+const DoctorDoctor = require("../models/doctorDoctor");
 
 const DoctorPatientMessage = require("../models/doctorPatientMessage");
 const DoctorDoctorMessage = require("../models/doctorDoctorMessage");
@@ -225,6 +226,36 @@ const enablePatientMessage = async (req, res) => {
       { messageStatus: true }
     );
     res.status(200).json({ message: "Messaging has enables for that patient" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const addDoctor = async (req, res) => {
+  const doctorId = req.user.id;
+  const { reciveDoctorId } = req.body;
+
+  if (!reciveDoctorId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const recipient = await Doctor.findOne({ doctorId: reciveDoctorId });
+  if (!recipient) {
+    return res.status(404).json({ message: "Invalid doctor recipient" });
+  }
+
+  const existingDoctorDoctor = await DoctorDoctor.findOne({
+    doctorId,
+    reciveDoctorId,
+  });
+  if (existingDoctorDoctor)
+    return res.status(409).json({ message: "Doctor is already in the list" });
+
+  try {
+    await DoctorDoctor.create({ doctorId, reciveDoctorId });
+    res.status(200).json({ message: "Doctor successfully added to the list" });
   } catch (error) {
     res
       .status(500)
@@ -505,6 +536,7 @@ module.exports = {
   getDoctorHomepageData,
   addPatient,
   getPatientList,
+  addDoctor,
   enablePatientMessage,
   getdoctorPatientMessages,
   doctorSendMessageToPatient,
