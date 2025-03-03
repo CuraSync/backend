@@ -168,6 +168,35 @@ const getDoctorList = async (req, res) => {
 }
 };
 
+const addLabortory = async (req, res) => {
+  const patientId = req.user.id;
+  const { labId } = req.body;
+
+  if (!labId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingLab = await Laboratory.findOne({ labId });
+  if (!existingLab) {
+    return res.status(404).json({ message: "Invalid laboratory" });
+  }
+
+  try {
+    const existingPatientLab = await PatientLab.findOne({ patientId, labId });
+    if (existingPatientLab) {
+      return res.status(409).json({ message: "Lab already added" });
+    }
+
+    await PatientLab.create({ patientId, labId });
+    res.status(201).json({ message: "Lab added successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+
+}
+
 const getLaboratoryList = async (req, res) => {
   const patientId = req.user.id;
 
@@ -604,6 +633,7 @@ module.exports = {
   getPatientProfile,
   getPatientHomepageData,
   getDoctorList,
+  addLabortory,
   getLaboratoryList,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,

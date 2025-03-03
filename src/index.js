@@ -123,6 +123,12 @@ app.get(
   patientController.getDoctorList
 );
 
+app.post(
+  "/laboratory",
+  authenticateToken,
+  patientController.addLabortory
+);
+
 app.get(
   "/patient/laboratories",
   authenticateToken,
