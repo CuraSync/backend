@@ -8,12 +8,10 @@ const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 // Add this import at the top with your other imports
 const PatientLabMessage = require("../models/patientLabMessage");
 const Laboratory = require("../models/laboratory"); // Make sure this exists
-const PatientLab = require("../models/patientLab");
-const PatientPharmacy = require("../models/patientPharmacy");
-const DoctorPatient = require("../models/doctorPatient");
 
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const Pharmacy = require("../models/pharmacy");
+const Timeline = require("../models/timeline");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -138,7 +136,7 @@ const getPatientHomepageData = async (req, res) => {
 const getDoctorList = async (req, res) => {
   const patientId = req.user.id;
 
-  try{
+  try {
     const doctorPatients = await DoctorPatient.find({ patientId }).select(
       "-_id -patientId -createdAt -updatedAt -__v"
     );
@@ -154,19 +152,19 @@ const getDoctorList = async (req, res) => {
       }).select("firstName lastName profilePic -_id");
       if (doctorDetails) {
         const doctor = {
-          ...doctorPatient.toObject(), 
-          ...doctorDetails.toObject()
+          ...doctorPatient.toObject(),
+          ...doctorDetails.toObject(),
         };
         doctors.push(doctor);
+      }
     }
-  }  
-  
-  res.status(200).json(doctors);
-}catch (error) {
-  res
-    .status(500)
-    .json({ message: "Unexpected error occurred", error: error.message });
-}
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
 };
 
 const addLabortory = async (req, res) => {
@@ -195,8 +193,7 @@ const addLabortory = async (req, res) => {
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-
-}
+};
 
 const getLaboratoryList = async (req, res) => {
   const patientId = req.user.id;
@@ -205,11 +202,11 @@ const getLaboratoryList = async (req, res) => {
     const patientLabs = await PatientLab.find({ patientId }).select(
       "-_id -patientId -createdAt -updatedAt -__v"
     );
-    
+
     if (!patientLabs.length) {
       return res.status(404).json({ message: "No labs found" });
     }
-    
+
     const labs = [];
     for (const patientLab of patientLabs) {
       const labDetails = await Laboratory.findOne({
@@ -230,7 +227,7 @@ const getLaboratoryList = async (req, res) => {
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-};    
+};
 
 const addPharmacy = async (req, res) => {
   const patientId = req.user.id;
@@ -244,9 +241,12 @@ const addPharmacy = async (req, res) => {
   if (!existingPharmacy) {
     return res.status(404).json({ message: "Invalid pharmacy" });
   }
-  
+
   try {
-    const existingPatientPharmacy = await PatientPharmacy.findOne({ patientId, pharmacyId });
+    const existingPatientPharmacy = await PatientPharmacy.findOne({
+      patientId,
+      pharmacyId,
+    });
     if (existingPatientPharmacy) {
       return res.status(409).json({ message: "Pharmacy already added" });
     }
@@ -292,7 +292,6 @@ const getPharmacyList = async (req, res) => {
       .json({ message: "Unexpected error occurred", error: error.message });
   }
 };
-
 
 // Message Section
 // Add encryption/decryption utilities
@@ -548,7 +547,7 @@ const getPatientLabMessages = async (req, res) => {
     // Decrypt all messages
     messages.forEach((message) => {
       // Parse the decrypted data back to an object
-      message.data = JSON.parse(decryptMessage(message.data));
+      message.data = decryptMessage(message.data);
     });
 
     res.status(200).json(messages);
@@ -676,10 +675,46 @@ const getPatientPharmacyMessages = async (req, res) => {
 
     // Decrypt all messages
     messages.forEach((message) => {
-      message.data = JSON.parse(decryptMessage(message.data));
+      message.data = decryptMessage(message.data);
     });
 
     res.status(200).json(messages);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getPatientTimelineData = async (req, res) => {
+  const patientId = req.user.id;
+  const { doctorId } = req.body;
+
+  if (!doctorId) {
+    return res.status(400).json({ message: "Doctor ID is required" });
+  }
+
+  // Verify that the doctor exists
+  const doctor = await Doctor.findOne({ doctorId });
+  if (!doctor) {
+    return res.status(404).json({ message: "Invalid doctor" });
+  }
+
+  try {
+    const timelineEntries = await Timeline.find({
+      doctorId,
+      patientId,
+    }).select("-doctorId -createdAt -updatedAt -__v -patientId");
+
+    if (!timelineEntries.length) {
+      return res.status(404).json({ message: "No timeline entries found" });
+    }
+
+    timelineEntries.forEach((entry) => {
+      entry.data = decryptMessage(entry.data);
+    });
+
+    res.status(200).json(timelineEntries);
   } catch (error) {
     res
       .status(500)
@@ -703,4 +738,5 @@ module.exports = {
   getPatientLabMessages,
   patientSendMessageToPharmacy,
   getPatientPharmacyMessages,
+  getPatientTimelineData,
 };
