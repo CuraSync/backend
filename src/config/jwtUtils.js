@@ -39,4 +39,17 @@ const verifyToken = (token, req, res, next) => {
   });
 };
 
-module.exports = { generateAccessToken, generateRefreshToken, verifyToken };
+// New method for WebSocket token verification
+const verifyWebSocketToken = (token, callback) => {
+  jwt.verify(token, publicKey, { algorithms: ["RS256"] }, (err, user) => {
+    if (err) return callback(new Error("Invalid Token"));
+    callback(null, user);
+  });
+};
+
+module.exports = {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+  verifyWebSocketToken,
+};
