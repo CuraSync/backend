@@ -246,6 +246,12 @@ app.get(
   laboratoryController.getLaboratoryHomepageData
 );
 
+app.get(
+  "/laboratory/patients",
+  authenticateToken,
+  laboratoryController.getPatientList
+);
+
 // Laboratory-Patient message routes
 app.post(
   "/laboratory/patient/sendMessage",
