@@ -257,7 +257,41 @@ const addPharmacy = async (req, res) => {
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-}
+};
+
+const getPharmacyList = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const patientPharmacies = await PatientPharmacy.find({ patientId }).select(
+      "-_id -patientId -createdAt -updatedAt -__v"
+    );
+
+    if (!patientPharmacies.length) {
+      return res.status(404).json({ message: "No pharmacies found" });
+    }
+
+    const pharmacies = [];
+    for (const patientPharmacy of patientPharmacies) {
+      const pharmacyDetails = await Pharmacy.findOne({
+        pharmacyId: patientPharmacy.pharmacyId,
+      }).select("pharmacyName profilePic -_id");
+      if (pharmacyDetails) {
+        const pharmacy = {
+          ...patientPharmacy.toObject(),
+          ...pharmacyDetails.toObject(),
+        };
+        pharmacies.push(pharmacy);
+      }
+    }
+
+    res.status(200).json(pharmacies);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
 
 
 // Message Section
@@ -662,6 +696,7 @@ module.exports = {
   addLabortory,
   getLaboratoryList,
   addPharmacy,
+  getPharmacyList,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
   patientSendMessageToLab,

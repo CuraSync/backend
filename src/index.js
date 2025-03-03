@@ -141,6 +141,12 @@ app.post(
   patientController.addPharmacy
 );
 
+app.get(
+  "/patient/pharmacies",
+  authenticateToken,
+  patientController.getPharmacyList
+);
+
 // Message part
 app.post(
   "/patient/doctor/sendMessage",
