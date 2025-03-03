@@ -263,6 +263,40 @@ const addDoctor = async (req, res) => {
   }
 };
 
+const getDoctorList = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const doctorDoctors = await DoctorDoctor.find({ doctorId }).select(
+      "-_id -doctorId -createdAt -updatedAt -__v"
+    );
+
+    if (!doctorDoctors.length) {
+      return res.status(404).json({ message: "No doctors found" });
+    }
+
+    const doctors = [];
+    for (const doctorDoctor of doctorDoctors) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: doctorDoctor.reciveDoctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...doctorDoctor.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+}catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 // Messaging Section
 
 const doctorSendMessageToPatient = async (req, res) => {
@@ -537,6 +571,7 @@ module.exports = {
   addPatient,
   getPatientList,
   addDoctor,
+  getDoctorList,
   enablePatientMessage,
   getdoctorPatientMessages,
   doctorSendMessageToPatient,

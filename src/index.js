@@ -78,6 +78,11 @@ app.post(
   doctorController.addDoctor
 );  
 
+app.get(
+  "/doctor/doctors",
+  authenticateToken, 
+  doctorController.getDoctorList);
+
 // message section
 app.post(
   "/doctor/patient/sendMessage",
