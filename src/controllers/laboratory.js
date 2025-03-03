@@ -4,6 +4,7 @@ const Laboratory = require("../models/laboratory");
 
 const Patient = require("../models/patient");
 const PatientLabMessage = require("../models/patientLabMessage");
+const PatientLab = require("../models/patientLab");
 const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 
 // Add these constants for encryption/decryption
@@ -109,6 +110,52 @@ const getLaboratoryProfile = async (req, res) => {
     return res.status(404).json({ message: "Lab not found" });
   }
   res.status(200).json(lab);
+};
+
+const getLaboratoryHomepageData = async (req, res) => {
+  const labId = req.user.id;
+
+  const user = await Laboratory.findOne({ labId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "Lab not found" });
+  }
+
+  res.status(200).json(user);
+};
+
+const getPatientList = async (req, res) => {
+  const labId = req.user.id;
+
+  try{
+    const patientLabs = await PatientLab.find({labId}).select(
+      "patientId -_id"
+    );
+
+    if (!patientLabs.length) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    const patients = [];
+    for (const patientLab of patientLabs) {
+      const patientDetails = await Patient.findOne({
+        patientId: patientLab.patientId
+      }).select("firstName lastName profilePic");
+      if (patientDetails) {
+        const patient = {
+          ...patientLab.toObject(),
+          ...patientDetails.toObject()
+      };
+      patients.push(patient);
+  }
+}
+
+res.status(200).json(patients);
+}catch (error) {
+  res
+    .status(500)
+    .json({ message: "Unexpected error occurred", error: error.message });
+}
 };
 
 // Add encryption/decryption utilities
@@ -269,6 +316,8 @@ module.exports = {
   laboratoryRegister,
   laboratoryProfileUpdate,
   getLaboratoryProfile,
+  getPatientList,
+  getLaboratoryHomepageData,
   labSendMessageToPatient,
   getLabPatientMessages,
 };
