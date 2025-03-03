@@ -111,6 +111,18 @@ const getLaboratoryProfile = async (req, res) => {
   res.status(200).json(lab);
 };
 
+const getLaboratoryHomepageData = async (req, res) => {
+  const labId = req.user.id;
+
+  const user = await Laboratory.findOne({ labId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "Lab not found" });
+  }
+
+  res.status(200).json(user);
+};
+
 // Add encryption/decryption utilities
 const encryptMessage = (message) => {
   const nonce = crypto.randomBytes(NONCE_LENGTH); // Generate a unique nonce
@@ -269,6 +281,7 @@ module.exports = {
   laboratoryRegister,
   laboratoryProfileUpdate,
   getLaboratoryProfile,
+  getLaboratoryHomepageData,
   labSendMessageToPatient,
   getLabPatientMessages,
 };
