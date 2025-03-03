@@ -4,6 +4,8 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
+const http = require("http");
+
 const connectDB = require("./config/database");
 
 const authController = require("./controllers/auth");
@@ -18,10 +20,16 @@ const laboratoryController = require("./controllers/laboratory");
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+
+const server = http.createServer(app);
 // app.use(cors({ origin: "https://curasync.org", credentials: true })); // Only allow frontend to access it
 
 // Connect to the database
 connectDB();
+
+// **WebSockets Initialization**
+const { initializeWebSocket } = require("./config/webSocket");
+initializeWebSocket(server);
 
 // Authentication routes
 app.post("/login", authController.login);
@@ -32,7 +40,7 @@ app.post("/logout/all", authenticateToken, authController.logoutAll);
 // Protected route
 app.get("/protected", authenticateToken, protectedController.protectedRoute);
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+server.listen(5000, () => console.log("Server running on port 5000"));
 
 // Doctor routes
 app.post("/doctor/register", doctorController.doctorRegister);
@@ -64,6 +72,30 @@ app.post(
   doctorController.enablePatientMessage
 );
 
+// message section
+app.post(
+  "/doctor/patient/sendMessage",
+  authenticateToken,
+  doctorController.doctorSendMessageToPatient
+);
+app.post(
+  "/doctor/patient/messages",
+  authenticateToken,
+  doctorController.getdoctorPatientMessages
+);
+
+app.post(
+  "/doctor/doctor/sendMessage",
+  authenticateToken,
+  doctorController.doctorSendMessageToDoctor
+);
+
+app.post(
+  "/doctor/doctor/messages",
+  authenticateToken,
+  doctorController.getDoctorDoctorMessages
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
@@ -77,6 +109,45 @@ app.get(
   "/patient/profile",
   authenticateToken,
   patientController.getPatientProfile
+);
+
+// Message part
+app.post(
+  "/patient/doctor/sendMessage",
+  authenticateToken,
+  patientController.patientSendMessageToDoctor
+);
+
+app.post(
+  "/patient/doctor/messages",
+  authenticateToken,
+  patientController.getPatientDoctorMessages
+);
+
+// Patient-Lab message routes
+app.post(
+  "/patient/lab/sendMessage",
+  authenticateToken,
+  patientController.patientSendMessageToLab
+);
+
+app.post(
+  "/patient/lab/messages",
+  authenticateToken,
+  patientController.getPatientLabMessages
+);
+
+// Patient-Pharmacy message routes
+app.post(
+  "/patient/pharmacy/sendMessage",
+  authenticateToken,
+  patientController.patientSendMessageToPharmacy
+);
+
+app.post(
+  "/patient/pharmacy/messages",
+  authenticateToken,
+  patientController.getPatientPharmacyMessages
 );
 
 // Pharmacy routes
@@ -94,6 +165,19 @@ app.get(
   pharmacyController.getPharmacyProfile
 );
 
+// Pharmacy-Patient message routes
+app.post(
+  "/pharmacy/patient/sendMessage",
+  authenticateToken,
+  pharmacyController.pharmacySendMessageToPatient
+);
+
+app.post(
+  "/pharmacy/patient/messages",
+  authenticateToken,
+  pharmacyController.getPharmacyPatientMessages
+);
+
 // Laboratory routes
 app.post("/laboratory/register", laboratoryController.laboratoryRegister);
 
@@ -107,6 +191,19 @@ app.get(
   "/laboratory/profile",
   authenticateToken,
   laboratoryController.getLaboratoryProfile
+);
+
+// Laboratory-Patient message routes
+app.post(
+  "/laboratory/patient/sendMessage",
+  authenticateToken,
+  laboratoryController.labSendMessageToPatient
+);
+
+app.post(
+  "/laboratory/patient/messages",
+  authenticateToken,
+  laboratoryController.getLabPatientMessages
 );
 
 // Tests Area
