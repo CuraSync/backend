@@ -8,6 +8,7 @@ const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 // Add this import at the top with your other imports
 const PatientLabMessage = require("../models/patientLabMessage");
 const Laboratory = require("../models/laboratory"); // Make sure this exists
+const DoctorPatient = require("../models/doctorPatient");
 
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const Pharmacy = require("../models/pharmacy");
@@ -130,6 +131,40 @@ const getPatientHomepageData = async (req, res) => {
   }
 
   res.status(200).json(user);
+};
+
+const getDoctorList = async (req, res) => {
+  const patientId = req.user.id;
+
+  try{
+    const doctorPatients = await DoctorPatient.find({ patientId }).select(
+      "-_id -patientId -createdAt -updatedAt -__v"
+    );
+
+    if (!doctorPatients.length) {
+      return res.status(404).json({ message: "No doctors found" });
+    }
+
+    const doctors = [];
+    for (const doctorPatient of doctorPatients) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: doctorPatient.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...doctorPatient.toObject(), 
+          ...doctorDetails.toObject()
+        };
+        doctors.push(doctor);
+    }
+  }  
+  
+  res.status(200).json(doctors);
+}catch (error) {
+  res
+    .status(500)
+    .json({ message: "Unexpected error occurred", error: error.message });
+}
 };
 
 // Message Section
@@ -530,6 +565,7 @@ module.exports = {
   patientProfileUpdate,
   getPatientProfile,
   getPatientHomepageData,
+  getDoctorList,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
   patientSendMessageToLab,

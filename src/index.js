@@ -117,6 +117,12 @@ app.get(
   patientController.getPatientHomepageData
 );
 
+app.get(
+  "/patient/doctors",
+  authenticateToken,
+  patientController.getDoctorList
+);
+
 // Message part
 app.post(
   "/patient/doctor/sendMessage",
