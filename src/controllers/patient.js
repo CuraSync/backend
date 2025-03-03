@@ -120,6 +120,18 @@ const getPatientProfile = async (req, res) => {
   res.status(200).json(patient);
 };
 
+const getPatientHomepageData = async (req, res) => {
+  const patientId = req.user.id;
+
+  const user = await Patient.findOne({ patientId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.status(200).json(user);
+};
+
 // Message Section
 // Add encryption/decryption utilities
 const encryptMessage = (message) => {
@@ -517,6 +529,7 @@ module.exports = {
   patientRegister,
   patientProfileUpdate,
   getPatientProfile,
+  getPatientHomepageData,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
   patientSendMessageToLab,
