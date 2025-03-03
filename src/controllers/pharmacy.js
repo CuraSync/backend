@@ -119,7 +119,7 @@ const getPharmacyHomepageData = async (req, res) => {
   const user = await Pharmacy.findOne({ pharmacyId }).select("-password -_id");
 
   if (!user) {
-    return res.status(404).json({ message: "Pharmacy not found" }); 
+    return res.status(404).json({ message: "Pharmacy not found" });
   }
 
   res.status(200).json(user);
@@ -152,12 +152,11 @@ const getPatientList = async (req, res) => {
     }
 
     res.status(200).json(patients);
-  }catch (error) {
+  } catch (error) {
     res
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-
 };
 
 // Add encryption/decryption utilities
@@ -301,7 +300,7 @@ const getPharmacyPatientMessages = async (req, res) => {
 
     // Decrypt all messages
     messages.forEach((message) => {
-      message.data = JSON.parse(decryptMessage(message.data));
+      message.data = decryptMessage(message.data);
     });
 
     res.status(200).json(messages);
