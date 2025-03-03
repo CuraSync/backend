@@ -135,6 +135,12 @@ app.get(
   patientController.getLaboratoryList
 );
 
+app.post(
+  "/pharmacy",
+  authenticateToken,
+  patientController.addPharmacy
+);
+
 // Message part
 app.post(
   "/patient/doctor/sendMessage",

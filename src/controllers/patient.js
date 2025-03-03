@@ -9,6 +9,7 @@ const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 const PatientLabMessage = require("../models/patientLabMessage");
 const Laboratory = require("../models/laboratory"); // Make sure this exists
 const PatientLab = require("../models/patientLab");
+const PatientPharmacy = require("../models/patientPharmacy");
 const DoctorPatient = require("../models/doctorPatient");
 
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
@@ -231,7 +232,32 @@ const getLaboratoryList = async (req, res) => {
   }
 };    
 
+const addPharmacy = async (req, res) => {
+  const patientId = req.user.id;
+  const { pharmacyId } = req.body;
 
+  if (!pharmacyId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingPharmacy = await Pharmacy.findOne({ pharmacyId });
+  if (!existingPharmacy) {
+    return res.status(404).json({ message: "Invalid pharmacy" });
+  }
+  
+  try {
+    const existingPatientPharmacy = await PatientPharmacy.findOne({ patientId, pharmacyId });
+    if (existingPatientPharmacy) {
+      return res.status(409).json({ message: "Pharmacy already added" });
+    }
+    await PatientPharmacy.create({ patientId, pharmacyId });
+    res.status(201).json({ message: "Pharmacy added successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+}
 
 
 // Message Section
@@ -635,6 +661,7 @@ module.exports = {
   getDoctorList,
   addLabortory,
   getLaboratoryList,
+  addPharmacy,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
   patientSendMessageToLab,
