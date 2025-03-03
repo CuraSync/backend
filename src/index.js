@@ -212,6 +212,18 @@ app.get(
   pharmacyController.getPharmacyProfile
 );
 
+app.get(
+  "/pharmacy/home",
+  authenticateToken,
+  pharmacyController.getPharmacyHomepageData
+);
+
+app.get(
+  "/pharmacy/patients",
+  authenticateToken,
+  pharmacyController.getPatientList
+);
+
 // Pharmacy-Patient message routes
 app.post(
   "/pharmacy/patient/sendMessage",

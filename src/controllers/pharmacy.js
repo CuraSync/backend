@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const Patient = require("../models/patient");
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const { connectedUsers, getChatNamespace } = require("../config/webSocket");
+const PatientPharmacy = require("../models/patientPharmacy");
 
 // Add these constants for encryption/decryption
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
@@ -110,6 +111,53 @@ const getPharmacyProfile = async (req, res) => {
     return res.status(404).json({ message: "Pharmacy not found" });
   }
   res.status(200).json(pharmacy);
+};
+
+const getPharmacyHomepageData = async (req, res) => {
+  const pharmacyId = req.user.id;
+
+  const user = await Pharmacy.findOne({ pharmacyId }).select("-password -_id");
+
+  if (!user) {
+    return res.status(404).json({ message: "Pharmacy not found" }); 
+  }
+
+  res.status(200).json(user);
+};
+
+const getPatientList = async (req, res) => {
+  const pharmacyId = req.user.id;
+
+  try {
+    const patientPharmacies = await PatientPharmacy.find({ pharmacyId }).select(
+      "patientId -_id"
+    );
+
+    if (!patientPharmacies.length) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    const patients = [];
+    for (const patientPharmacy of patientPharmacies) {
+      const patientDetails = await Patient.findOne({
+        patientId: patientPharmacy.patientId,
+      }).select("firstName lastName profilePic -_id");
+      if (patientDetails) {
+        const patient = {
+          ...patientPharmacy.toObject(),
+          ...patientDetails.toObject(),
+        };
+        patients.push(patient);
+      }
+    }
+
+    res.status(200).json(patients);
+  }catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+
 };
 
 // Add encryption/decryption utilities
@@ -268,6 +316,8 @@ module.exports = {
   pharmacyRegister,
   pharmacyProfileUpdate,
   getPharmacyProfile,
+  getPharmacyHomepageData,
+  getPatientList,
   pharmacySendMessageToPatient,
   getPharmacyPatientMessages,
 };
