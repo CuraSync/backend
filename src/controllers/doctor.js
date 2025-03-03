@@ -4,11 +4,16 @@ const crypto = require("crypto");
 const Doctor = require("../models/doctor");
 const DoctorPatient = require("../models/doctorPatient");
 const Patient = require("../models/patient");
-const DoctorDoctor = require("../models/doctorDoctor");
 
 const DoctorPatientMessage = require("../models/doctorPatientMessage");
 const DoctorDoctorMessage = require("../models/doctorDoctorMessage");
-const { connectedUsers, getChatNamespace } = require("../config/webSocket");
+const Timeline = require("../models/timeline");
+const {
+  connectedUsers,
+  getChatNamespace,
+  connectedUsersTl,
+  getTimelineNamespace,
+} = require("../config/webSocket");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -290,7 +295,7 @@ const getDoctorList = async (req, res) => {
     }
 
     res.status(200).json(doctors);
-}catch (error) {
+  } catch (error) {
     res
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
@@ -563,6 +568,134 @@ const getDoctorDoctorMessages = async (req, res) => {
   }
 };
 
+// Timeline section
+const doctorSendNoteToTimeline = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const { patientId, note, addedDate, addedTime, type } = req.body;
+
+  if (!patientId || !note || !addedDate || !addedTime || !type) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  let data;
+  if (type == "note" || type == "donlynote" || type == "prescription") {
+    data = { note: note };
+  } else {
+    return res.status(400).json({ message: "Invalid option in type field." });
+  }
+
+  const patient = await Patient.findOne({ patientId });
+  if (!patient) {
+    return res.status(404).json({ message: "Invalid patient" });
+  }
+
+  const encryptedata = encryptMessage(JSON.stringify(data));
+
+  const sender = "doctor";
+
+  try {
+    // Save message to DB and retrieve the saved document
+    const savedMessage = await Timeline.create({
+      doctorId,
+      patientId,
+      type,
+      sender,
+      data: encryptedata, // Store encrypted message
+      addedDate,
+      addedTime,
+    });
+
+    // Convert to an object that can be sent over WebSockets
+    const socketMessage = {
+      doctorId: savedMessage.doctorId,
+      patientId: savedMessage.patientId,
+      type: savedMessage.type,
+      sender: savedMessage.sender,
+      data: data, // Send plaintext message over WebSocket
+      addedDate: savedMessage.addedDate,
+      addedTime: savedMessage.addedTime,
+    };
+
+    const timelineNamespace = getTimelineNamespace();
+
+    // Find and send to all active sockets of sender
+    if (
+      connectedUsersTl.has(doctorId) &&
+      connectedUsersTl.get(doctorId).has(patientId)
+    ) {
+      const senderSockets = connectedUsersTl
+        .get(doctorId)
+        .get(patientId).sockets;
+      senderSockets.forEach((socketId) => {
+        timelineNamespace.to(socketId).emit("receive-message", socketMessage);
+      });
+    } else {
+      console.log(
+        `No active connection for sender doctor ${doctorId} and patient doctor ${patientId}`
+      );
+    }
+
+    // Find and send to all active sockets of recipient
+    if (
+      connectedUsersTl.has(patientId) &&
+      connectedUsersTl.get(patientId).has(doctorId)
+    ) {
+      const recipientSockets = connectedUsersTl
+        .get(patientId)
+        .get(doctorId).sockets;
+      recipientSockets.forEach((socketId) => {
+        timelineNamespace.to(socketId).emit("receive-message", socketMessage);
+      });
+    } else {
+      console.log(
+        `No active connection for patient ${patientId} and sender doctor ${doctorId}`
+      );
+    }
+
+    res.status(201).json({ message: "Message sent successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getDoctorTimelineData = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const { patientId } = req.body;
+
+  if (!patientId) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const patient = await Patient.findOne({ patientId });
+  if (!patient) {
+    return res.status(404).json({ message: "Invalid patient" });
+  }
+
+  try {
+    const patients = await Timeline.find({
+      doctorId,
+      patientId,
+    }).select("-doctorId -createdAt -updatedAt -__v -patientId");
+    if (!patients.length) {
+      return res.status(404).json({ message: "No messages found" });
+    }
+
+    patients.forEach((patient) => {
+      patient.data = decryptMessage(patient.data);
+    });
+
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
@@ -570,11 +703,13 @@ module.exports = {
   getDoctorHomepageData,
   addPatient,
   getPatientList,
+  enablePatientMessage,
   addDoctor,
   getDoctorList,
-  enablePatientMessage,
   getdoctorPatientMessages,
   doctorSendMessageToPatient,
   doctorSendMessageToDoctor,
   getDoctorDoctorMessages,
+  doctorSendNoteToTimeline,
+  getDoctorTimelineData,
 };

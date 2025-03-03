@@ -127,8 +127,8 @@ const getLaboratoryHomepageData = async (req, res) => {
 const getPatientList = async (req, res) => {
   const labId = req.user.id;
 
-  try{
-    const patientLabs = await PatientLab.find({labId}).select(
+  try {
+    const patientLabs = await PatientLab.find({ labId }).select(
       "patientId -_id"
     );
 
@@ -139,23 +139,23 @@ const getPatientList = async (req, res) => {
     const patients = [];
     for (const patientLab of patientLabs) {
       const patientDetails = await Patient.findOne({
-        patientId: patientLab.patientId
+        patientId: patientLab.patientId,
       }).select("firstName lastName profilePic");
       if (patientDetails) {
         const patient = {
           ...patientLab.toObject(),
-          ...patientDetails.toObject()
-      };
-      patients.push(patient);
-  }
-}
+          ...patientDetails.toObject(),
+        };
+        patients.push(patient);
+      }
+    }
 
-res.status(200).json(patients);
-}catch (error) {
-  res
-    .status(500)
-    .json({ message: "Unexpected error occurred", error: error.message });
-}
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
 };
 
 // Add encryption/decryption utilities
@@ -301,7 +301,7 @@ const getLabPatientMessages = async (req, res) => {
 
     // Decrypt all messages
     messages.forEach((message) => {
-      message.data = JSON.parse(decryptMessage(message.data));
+      message.data = decryptMessage(message.data);
     });
 
     res.status(200).json(messages);
