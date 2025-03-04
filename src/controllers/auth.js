@@ -50,7 +50,7 @@ const login = async (req, res) => {
     } else if (credential_type === "email") {
       user = await usersCollection.findOne({ email: credential_data });
       if (user) {
-        id = user.doctorId;
+        id = user.patientId;
       }
     }
   } else if (role === "pharmacy") {

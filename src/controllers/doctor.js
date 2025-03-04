@@ -8,6 +8,8 @@ const Patient = require("../models/patient");
 const DoctorPatientMessage = require("../models/doctorPatientMessage");
 const DoctorDoctorMessage = require("../models/doctorDoctorMessage");
 const Timeline = require("../models/timeline");
+const DoctorDoctor = require("../models/doctorDoctor");
+
 const {
   connectedUsers,
   getChatNamespace,

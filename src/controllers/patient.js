@@ -13,6 +13,10 @@ const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const Pharmacy = require("../models/pharmacy");
 const Timeline = require("../models/timeline");
 
+const DoctorPatient = require("../models/doctorPatient");
+const PatientLab = require("../models/patientLab");
+const PatientPharmacy = require("../models/patientPharmacy");
+
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
 
