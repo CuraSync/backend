@@ -2,12 +2,10 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 
-const privateKey = fs.readFileSync(
-  path.resolve(process.env.JWT_PRIVATE_KEY_PATH),
+const privateKey = Buffer.from(process.env.JWT_PRIVATE_KEY, "base64").toString(
   "utf8"
 );
-const publicKey = fs.readFileSync(
-  path.join(process.env.JWT_PUBLIC_KEY_PATH),
+const publicKey = Buffer.from(process.env.JWT_PUBLIC_KEY, "base64").toString(
   "utf8"
 );
 

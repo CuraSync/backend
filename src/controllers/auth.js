@@ -14,8 +14,7 @@ const Patient = require("../models/patient");
 const Pharmacy = require("../models/pharmacy");
 const Laboratory = require("../models/laboratory");
 
-const publicKey = fs.readFileSync(
-  path.join(process.env.JWT_PUBLIC_KEY_PATH),
+const publicKey = Buffer.from(process.env.JWT_PUBLIC_KEY, "base64").toString(
   "utf8"
 );
 
