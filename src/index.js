@@ -40,7 +40,9 @@ app.post("/logout/all", authenticateToken, authController.logoutAll);
 // Protected route
 app.get("/protected", authenticateToken, protectedController.protectedRoute);
 
-server.listen(5000, () => console.log("Server running on port 5000"));
+server.listen(process.env.PORT, () =>
+  console.log("Server running on port ", process.env.PORT)
+);
 
 // Doctor routes
 app.post("/doctor/register", doctorController.doctorRegister);
@@ -281,3 +283,7 @@ app.post(
 // Tests Area
 const jwtTets = require("./test/jwtTests");
 app.get("/test/refresh-tokens", jwtTets.jwtRTokens);
+
+app.get("/", (req, res) => {
+  res.json({ message: "Curasync Backend testing is alive" });
+});
