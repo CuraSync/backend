@@ -6,6 +6,8 @@ const cors = require("cors");
 
 const http = require("http");
 
+const multer = require("multer");
+
 const connectDB = require("./config/database");
 
 const authController = require("./controllers/auth");
@@ -280,6 +282,37 @@ app.post(
   authenticateToken,
   laboratoryController.getLabPatientMessages
 );
+
+// File upload
+const {
+  uploadLabReport,
+  getLabReportFileById,
+  getLabReportFileInfoById,
+} = require("./controllers/labReport");
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Custom error handling middleware for upload route
+const uploadErrorHandler = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    // Handle Multer-specific errors
+    return res.status(400).json({ error: err.message });
+  } else if (err) {
+    // Handle other errors
+    return res.status(500).json({ error: "An unexpected error occurred" });
+  }
+  next();
+};
+
+app.post(
+  "/labreport/upload",
+  authenticateToken,
+  upload.single("file"),
+  uploadErrorHandler,
+  uploadLabReport
+);
+app.get("/labreport/file/:id", authenticateToken, getLabReportFileById);
+app.get("/labreport/info/:id", authenticateToken, getLabReportFileInfoById);
 
 // Tests Area
 const jwtTets = require("./test/jwtTests");
