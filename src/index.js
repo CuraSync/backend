@@ -24,7 +24,17 @@ app.use(express.json());
 app.use(cookieParser());
 
 const server = http.createServer(app);
-app.use(cors());
+
+const corsOptions = {
+  origin: true, // This is better than "*" when using credentials
+  credentials: true,
+  exposedHeaders: ["Content-Type", "Content-Length"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
+app.use(cors(corsOptions));
+
+// app.use(cors());
 // app.use(cors({ origin: "https://curasync.org", credentials: true })); // Only allow frontend to access it
 
 // Connect to the database

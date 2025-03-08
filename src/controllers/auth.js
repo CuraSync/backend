@@ -98,9 +98,12 @@ const login = async (req, res) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production", // Ensures HTTPS in production
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-  res.json({ accessToken, deviceId });
+  res.json({ accessToken, deviceId, id });
 };
 
 const refresh = async (req, res) => {
@@ -135,7 +138,10 @@ const refresh = async (req, res) => {
 
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production", // Ensures HTTPS in production
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       res.json({ accessToken: newAccessToken });
     }
