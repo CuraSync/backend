@@ -762,6 +762,40 @@ const acceptDoctorRequest = async (req, res) => {
   }
 };
 
+const getDoctorRequests = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const requests = await DpRequest.find({
+      patientId,
+    }).select("-patientId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -780,4 +814,5 @@ module.exports = {
   getPatientPharmacyMessages,
   getPatientTimelineData,
   acceptDoctorRequest,
+  getDoctorRequests,
 };
