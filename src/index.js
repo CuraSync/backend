@@ -128,6 +128,12 @@ app.post(
   doctorController.getDoctorTimelineData
 );
 
+app.post(
+  "/patient/request",
+  authenticateToken,
+  doctorController.doctorPatientRequestCreate
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
