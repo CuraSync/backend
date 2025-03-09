@@ -144,36 +144,6 @@ const getDoctorHomepageData = async (req, res) => {
   res.status(200).json(user);
 };
 
-const addPatient = async (req, res) => {
-  const doctorId = req.user.id;
-  const { patientId } = req.body;
-
-  if (!patientId) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  const patient = await Patient.findOne({ patientId });
-  if (!patient) {
-    return res.status(404).json({ message: "Invalid patient" });
-  }
-
-  const existingDoctorPatient = await DoctorPatient.findOne({
-    doctorId,
-    patientId,
-  });
-  if (existingDoctorPatient)
-    return res.status(409).json({ message: "Patient is already in the list" });
-
-  try {
-    await DoctorPatient.create({ doctorId, patientId });
-    res.status(200).json({ message: "Patient successfully added to the list" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unexpected error occurred", error: error.message });
-  }
-};
-
 const getPatientList = async (req, res) => {
   const doctorId = req.user.id;
 
@@ -745,7 +715,6 @@ module.exports = {
   doctorProfileUpdate,
   getDoctorProfile,
   getDoctorHomepageData,
-  addPatient,
   getPatientList,
   enablePatientMessage,
   addDoctor,
