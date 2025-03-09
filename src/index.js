@@ -77,8 +77,6 @@ app.get(
   doctorController.getDoctorHomepageData
 );
 
-app.post("/patient", authenticateToken, doctorController.addPatient);
-
 app.get("/doctor/patient", authenticateToken, doctorController.getPatientList);
 
 app.post(
@@ -126,6 +124,18 @@ app.post(
   "/doctor/timeline/notes",
   authenticateToken,
   doctorController.getDoctorTimelineData
+);
+
+app.post(
+  "/patient/request",
+  authenticateToken,
+  doctorController.doctorPatientRequestCreate
+);
+
+app.get(
+  "/doctor/patient/request",
+  authenticateToken,
+  doctorController.getPatientRequests
 );
 
 //Patient routes
@@ -211,6 +221,18 @@ app.post(
   "/patient/timeline/notes",
   authenticateToken,
   patientController.getPatientTimelineData
+);
+
+app.post(
+  "/patient/request/accept",
+  authenticateToken,
+  patientController.acceptDoctorRequest
+);
+
+app.get(
+  "/patient/doctor/request",
+  authenticateToken,
+  patientController.getDoctorRequests
 );
 
 // Pharmacy routes

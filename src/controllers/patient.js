@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const DoctorPatientMessage = require("../models/doctorPatientMessage");
 const Doctor = require("../models/doctor");
+const mongoose = require("mongoose");
+
 const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 
 // Add this import at the top with your other imports
@@ -16,6 +18,7 @@ const Timeline = require("../models/timeline");
 const DoctorPatient = require("../models/doctorPatient");
 const PatientLab = require("../models/patientLab");
 const PatientPharmacy = require("../models/patientPharmacy");
+const DpRequest = require("../models/dpRequest");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -726,6 +729,73 @@ const getPatientTimelineData = async (req, res) => {
   }
 };
 
+const acceptDoctorRequest = async (req, res) => {
+  const { requestId } = req.body;
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(requestId)) {
+    return res.status(400).json({ message: "Invalid request ID format" });
+  }
+
+  const request = await DpRequest.findById(requestId);
+  if (!request) return res.status(404).json({ message: "Request not found" });
+
+  if (request.status == true) {
+    return res.status(400).json({ message: "Request is already accepted" });
+  }
+
+  try {
+    const { doctorId, patientId } = request;
+
+    await DoctorPatient.create({
+      doctorId,
+      patientId,
+    });
+
+    await DpRequest.updateOne({ _id: requestId }, { status: true });
+    res.status(200).json({ message: "Patient successfully added to the list" });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getDoctorRequests = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const requests = await DpRequest.find({
+      patientId,
+    }).select("-patientId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -743,4 +813,6 @@ module.exports = {
   patientSendMessageToPharmacy,
   getPatientPharmacyMessages,
   getPatientTimelineData,
+  acceptDoctorRequest,
+  getDoctorRequests,
 };

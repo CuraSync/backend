@@ -9,6 +9,7 @@ const DoctorPatientMessage = require("../models/doctorPatientMessage");
 const DoctorDoctorMessage = require("../models/doctorDoctorMessage");
 const Timeline = require("../models/timeline");
 const DoctorDoctor = require("../models/doctorDoctor");
+const DpRequest = require("../models/dpRequest");
 
 const {
   connectedUsers,
@@ -141,36 +142,6 @@ const getDoctorHomepageData = async (req, res) => {
   }
 
   res.status(200).json(user);
-};
-
-const addPatient = async (req, res) => {
-  const doctorId = req.user.id;
-  const { patientId } = req.body;
-
-  if (!patientId) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  const patient = await Patient.findOne({ patientId });
-  if (!patient) {
-    return res.status(404).json({ message: "Invalid patient" });
-  }
-
-  const existingDoctorPatient = await DoctorPatient.findOne({
-    doctorId,
-    patientId,
-  });
-  if (existingDoctorPatient)
-    return res.status(409).json({ message: "Patient is already in the list" });
-
-  try {
-    await DoctorPatient.create({ doctorId, patientId });
-    res.status(200).json({ message: "Patient successfully added to the list" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unexpected error occurred", error: error.message });
-  }
 };
 
 const getPatientList = async (req, res) => {
@@ -698,12 +669,86 @@ const getDoctorTimelineData = async (req, res) => {
   }
 };
 
+const doctorPatientRequestCreate = async (req, res) => {
+  const doctorId = req.user.id;
+
+  const { patientId, addedDate, addedTime } = req.body;
+
+  if (!patientId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const patient = await Patient.findOne({ patientId });
+  if (!patient) {
+    return res.status(404).json({ message: "Invalid patient" });
+  }
+
+  const existingRequest = await DpRequest.findOne({ doctorId, patientId });
+  if (existingRequest) {
+    if (existingRequest.status == false) {
+      return res.status(409).json({ message: "Request is already there" });
+    } else {
+      return res
+        .status(409)
+        .json({ message: "Patient is already in the list" });
+    }
+  }
+
+  try {
+    await DpRequest.create({
+      doctorId,
+      patientId,
+      status: false,
+      addedDate,
+      addedTime,
+    });
+    res.status(201).json({ message: "Request send successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getPatientRequests = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const requests = await DpRequest.find({
+      doctorId,
+    }).select("-doctorId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const patients = [];
+    for (const request of requests) {
+      const patientDetails = await Patient.findOne({
+        patientId: request.patientId,
+      }).select("firstName lastName profilePic -_id");
+      if (patientDetails) {
+        const patient = {
+          ...request.toObject(),
+          ...patientDetails.toObject(),
+        };
+        patients.push(patient);
+      }
+    }
+
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
   getDoctorProfile,
   getDoctorHomepageData,
-  addPatient,
   getPatientList,
   enablePatientMessage,
   addDoctor,
@@ -714,4 +759,6 @@ module.exports = {
   getDoctorDoctorMessages,
   doctorSendNoteToTimeline,
   getDoctorTimelineData,
+  doctorPatientRequestCreate,
+  getPatientRequests,
 };
