@@ -96,22 +96,14 @@ const login = async (req, res) => {
     redisClient
   );
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Ensures HTTPS in production
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-  res.json({ accessToken, deviceId, id });
+  res.json({ accessToken, deviceId, refreshToken });
 };
 
 const refresh = async (req, res) => {
-  const { deviceId, id } = req.body;
+  const { deviceId, id, refreshToken } = req.body;
   if (!deviceId || !id)
     return res.status(400).json({ message: "Required fields are missing" });
 
-  const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.status(401).json({ message: "Unauthorized" });
 
   const storedToken = await redisClient.get(`refresh:${id}:${deviceId}`);
@@ -136,14 +128,7 @@ const refresh = async (req, res) => {
         redisClient
       );
 
-      res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Ensures HTTPS in production
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.json({ accessToken: newAccessToken });
+      res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     }
   );
 };
