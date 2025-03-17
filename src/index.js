@@ -138,6 +138,12 @@ app.get(
   doctorController.getPatientRequests
 );
 
+app.post(
+  "/doctor/request",
+  authenticateToken,
+  doctorController.doctorDoctorRequestCreate
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
