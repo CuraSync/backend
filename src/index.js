@@ -144,6 +144,12 @@ app.post(
   doctorController.doctorDoctorRequestCreate
 );
 
+app.post(
+  "/doctor/request/accept",
+  authenticateToken,
+  doctorController.acceptDoctorRequest
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 

@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 const Doctor = require("../models/doctor");
 const DoctorPatient = require("../models/doctorPatient");
@@ -784,7 +785,40 @@ const doctorDoctorRequestCreate = async (req, res) => {
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-}
+};
+
+const acceptDoctorRequest = async (req, res) => { //accept doctor request by Doctor (patient for reference)
+  const {requestId} = req.body;
+
+  // Validate ObjectId
+   if (!mongoose.Types.ObjectId.isValid(requestId)) {
+     return res.status(400).json({ message: "Invalid request ID format" });
+   }
+
+  const request = await DdRequest.findById(requestId);
+  if (!request) {
+    return res.status(404).json({ message: "Request not found" });
+  }
+
+  if (request.status == "true") {
+    return res.status(409).json({ message: "Request is already accepted" });
+  }
+
+  try {
+    const { doctorId, secondDoctorId } = request;
+
+    await DoctorDoctor.create({ 
+      doctorId, 
+      reciveDoctorId: secondDoctorId 
+    });
+
+    await DdRequest.updateOne({ _id: requestId }, { status: "true" });
+    res.status(200).json({ message: "Request accepted and added to list successfully" });
+  }catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
 
 module.exports = {
   doctorRegister,
@@ -804,4 +838,5 @@ module.exports = {
   doctorPatientRequestCreate,
   getPatientRequests,
   doctorDoctorRequestCreate,
+  acceptDoctorRequest,
 };
