@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 const Doctor = require("../models/doctor");
 const DoctorPatient = require("../models/doctorPatient");
@@ -10,6 +11,7 @@ const DoctorDoctorMessage = require("../models/doctorDoctorMessage");
 const Timeline = require("../models/timeline");
 const DoctorDoctor = require("../models/doctorDoctor");
 const DpRequest = require("../models/dpRequest");
+const DdRequest = require("../models/ddRequest");
 
 const {
   connectedUsers,
@@ -744,6 +746,148 @@ const getPatientRequests = async (req, res) => {
   }
 };
 
+const doctorDoctorRequestCreate = async (req, res) => {
+  const doctorId = req.user.id;
+  const { secondDoctorId, addedDate, addedTime } = req.body;
+
+  if (!secondDoctorId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const recipient = await Doctor.findOne({ doctorId: secondDoctorId });
+  if (!recipient) {
+    return res.status(404).json({ message: "Invalid doctor recipient" });
+  }
+
+  const existingRequest = await DdRequest.findOne({
+    doctorId,
+    secondDoctorId,
+  });
+  if (existingRequest){
+    if(existingRequest.status == "false"){
+      return res.status(409).json({ message: "Request is already present" });
+  }else{
+    return res.status(409).json({ message: "Doctor is already present in the List" });
+  }
+}
+
+  try {
+    await DdRequest.create({ 
+      doctorId, 
+      secondDoctorId,
+      status: "false",
+      addedDate,
+      addedTime
+     });
+    res.status(200).json({ message: "Request sent successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const acceptDoctorRequest = async (req, res) => { //accept doctor request by Doctor (patient for reference)
+  const {requestId} = req.body;
+
+  // Validate ObjectId
+   if (!mongoose.Types.ObjectId.isValid(requestId)) {
+     return res.status(400).json({ message: "Invalid request ID format" });
+   }
+
+  const request = await DdRequest.findById(requestId);
+  if (!request) {
+    return res.status(404).json({ message: "Request not found" });
+  }
+
+  if (request.status == "true") {
+    return res.status(409).json({ message: "Request is already accepted" });
+  }
+
+  try {
+    const { doctorId, secondDoctorId } = request;
+
+    await DoctorDoctor.create({ 
+      doctorId, 
+      reciveDoctorId: secondDoctorId 
+    });
+
+    await DdRequest.updateOne({ _id: requestId }, { status: "true" });
+    res.status(200).json({ message: "Request accepted and added to list successfully" });
+  }catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getDoctorRequests = async (req, res) => {
+  const ReciverdoctorId = req.user.id;
+
+  try {
+    const requests = await DdRequest.find({
+      secondDoctorId: ReciverdoctorId,
+    }).select("-secondDoctorId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getSentDoctorRequests = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const requests = await DdRequest.find({
+      doctorId,
+    }).select("-doctorId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.secondDoctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
@@ -761,4 +905,8 @@ module.exports = {
   getDoctorTimelineData,
   doctorPatientRequestCreate,
   getPatientRequests,
+  doctorDoctorRequestCreate,
+  acceptDoctorRequest,
+  getDoctorRequests,
+  getSentDoctorRequests,
 };
