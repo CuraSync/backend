@@ -820,6 +820,74 @@ const acceptDoctorRequest = async (req, res) => { //accept doctor request by Doc
   }
 };
 
+const getDoctorRequests = async (req, res) => {
+  const ReciverdoctorId = req.user.id;
+
+  try {
+    const requests = await DdRequest.find({
+      secondDoctorId: ReciverdoctorId,
+    }).select("-secondDoctorId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.doctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getSentDoctorRequests = async (req, res) => {
+  const doctorId = req.user.id;
+
+  try {
+    const requests = await DdRequest.find({
+      doctorId,
+    }).select("-doctorId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const doctors = [];
+    for (const request of requests) {
+      const doctorDetails = await Doctor.findOne({
+        doctorId: request.secondDoctorId,
+      }).select("firstName lastName profilePic -_id");
+      if (doctorDetails) {
+        const doctor = {
+          ...request.toObject(),
+          ...doctorDetails.toObject(),
+        };
+        doctors.push(doctor);
+      }
+    }
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
@@ -839,4 +907,6 @@ module.exports = {
   getPatientRequests,
   doctorDoctorRequestCreate,
   acceptDoctorRequest,
+  getDoctorRequests,
+  getSentDoctorRequests,
 };

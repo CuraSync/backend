@@ -150,6 +150,18 @@ app.post(
   doctorController.acceptDoctorRequest
 );
 
+app.get(
+  "/doctor/doctor/request",
+  authenticateToken,
+  doctorController.getDoctorRequests
+);
+
+app.get(
+  "/doctor/doctor/sentrequest",
+  authenticateToken,
+  doctorController.getSentDoctorRequests
+);
+
 //Patient routes
 app.post("/patient/register", patientController.patientRegister);
 
