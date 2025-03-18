@@ -345,6 +345,36 @@ const acceptPatientRequest = async (req, res) => {
   }
 };
 
+const getPatientRequests = async (req, res) => {
+  const labId = req.user.id;
+
+  try{
+    const requests = await PlRequest.find({labId}).select("-labId -createdAt -updatedAt -__v");
+
+    if(!requests.length){
+      return res.status(404).json({message: "No requests found"});
+    }
+
+    const patients = [];
+    for(const request of requests){
+      const patientDetails = await Patient.findOne({
+        patientId: request.patientId
+      }).select("firstName lastName profilePic -_id");
+      if(patientDetails){
+        const patient = {
+          ...request.toObject(),
+          ...patientDetails.toObject()
+        };
+        patients.push(patient);
+      }
+    }
+
+    res.status(200).json(patients);
+  }catch(err){
+    res.status(500).json({message: "Unexpected error occurred", error: err.message});
+  }
+};
+
 module.exports = {
   laboratoryRegister,
   laboratoryProfileUpdate,
@@ -354,4 +384,5 @@ module.exports = {
   labSendMessageToPatient,
   getLabPatientMessages,
   acceptPatientRequest,
+  getPatientRequests,
 };

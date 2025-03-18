@@ -267,6 +267,12 @@ app.post(
   patientController.patientLabRequestCreate
 );
 
+app.get(
+  "/patient/laboratory/request",
+  authenticateToken,
+  patientController.getLaboratoryRequests
+);
+
 // Pharmacy routes
 app.post("/pharmacy/register", pharmacyController.pharmacyRegister);
 
@@ -391,4 +397,10 @@ app.post(
   "/laboratory/request/accept",
   authenticateToken,
   laboratoryController.acceptPatientRequest
+);
+
+app.get(
+  "/laboratory/patient/request",
+  authenticateToken,
+  laboratoryController.getPatientRequests
 );
