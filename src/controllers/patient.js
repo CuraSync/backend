@@ -19,6 +19,7 @@ const DoctorPatient = require("../models/doctorPatient");
 const PatientLab = require("../models/patientLab");
 const PatientPharmacy = require("../models/patientPharmacy");
 const DpRequest = require("../models/dpRequest");
+const PlRequest = require("../models/plRequest");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -796,6 +797,78 @@ const getDoctorRequests = async (req, res) => {
   }
 };
 
+const patientLabRequestCreate = async (req, res) => {
+  const patientId = req.user.id;
+  const { labId, addedDate, addedTime } = req.body;
+
+  if (!labId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingLab = await Laboratory.findOne({ labId });
+  if (!existingLab) {
+    return res.status(404).json({ message: "Invalid laboratory" });
+  }
+
+  const existingRequest = await PlRequest.findOne({ patientId, labId });
+  if(existingRequest) {
+    if(existingRequest.status == "false") {
+      return res.status(409).json({ message: "Request already exists" });
+    }else{
+      return res.status(409).json({ message: "Lab is already present in the List" });
+    }
+  }
+
+  try {
+    await PlRequest.create({
+      patientId,
+      labId,
+      status: "false",
+      addedDate,
+      addedTime,
+    });
+    res.status(201).json({ message: "Lab request created successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const getLaboratoryRequests = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const requests = await PlRequest.find({
+      patientId,
+    }).select("-patientId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const labs = [];
+    for (const request of requests) {
+      const labDetails = await Laboratory.findOne({
+        labId: request.labId,
+      }).select("labName profilePic -_id");
+      if (labDetails) {
+        const lab = {
+          ...request.toObject(),
+          ...labDetails.toObject(),
+        };
+        labs.push(lab);
+      }
+    }
+
+    res.status(200).json(labs);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -815,4 +888,6 @@ module.exports = {
   getPatientTimelineData,
   acceptDoctorRequest,
   getDoctorRequests,
+  patientLabRequestCreate,
+  getLaboratoryRequests,
 };

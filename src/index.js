@@ -126,6 +126,7 @@ app.post(
   doctorController.getDoctorTimelineData
 );
 
+//Request section
 app.post(
   "/patient/request",
   authenticateToken,
@@ -247,6 +248,7 @@ app.post(
   patientController.getPatientTimelineData
 );
 
+//Request section
 app.post(
   "/patient/request/accept",
   authenticateToken,
@@ -257,6 +259,18 @@ app.get(
   "/patient/doctor/request",
   authenticateToken,
   patientController.getDoctorRequests
+);
+
+app.post(
+  "/laboratory/request",
+  authenticateToken,
+  patientController.patientLabRequestCreate
+);
+
+app.get(
+  "/patient/laboratory/request",
+  authenticateToken,
+  patientController.getLaboratoryRequests
 );
 
 // Pharmacy routes
@@ -377,3 +391,16 @@ app.get("/test/refresh-tokens", jwtTets.jwtRTokens);
 app.get("/", (req, res) => {
   res.json({ message: "Curasync Backend testing is alive" });
 });
+
+//Request section
+app.post(
+  "/laboratory/request/accept",
+  authenticateToken,
+  laboratoryController.acceptPatientRequest
+);
+
+app.get(
+  "/laboratory/patient/request",
+  authenticateToken,
+  laboratoryController.getPatientRequests
+);
