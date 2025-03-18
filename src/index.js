@@ -247,6 +247,7 @@ app.post(
   patientController.getPatientTimelineData
 );
 
+//Request section
 app.post(
   "/patient/request/accept",
   authenticateToken,
@@ -257,6 +258,12 @@ app.get(
   "/patient/doctor/request",
   authenticateToken,
   patientController.getDoctorRequests
+);
+
+app.post(
+  "/laboratory/request",
+  authenticateToken,
+  patientController.patientLabRequestCreate
 );
 
 // Pharmacy routes
