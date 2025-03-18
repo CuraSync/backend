@@ -20,6 +20,7 @@ const PatientLab = require("../models/patientLab");
 const PatientPharmacy = require("../models/patientPharmacy");
 const DpRequest = require("../models/dpRequest");
 const PlRequest = require("../models/plRequest");
+const PhpRequest = require("../models/phpRequest");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -869,6 +870,78 @@ const getLaboratoryRequests = async (req, res) => {
   }
 };
 
+const patientPharmacyRequestCreate = async (req, res) => {
+  const patientId = req.user.id;
+  const { pharmacyId, addedDate, addedTime } = req.body;
+
+  if (!pharmacyId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  const existingPharmacy = await Pharmacy.findOne({ pharmacyId });
+  if (!existingPharmacy) {
+    return res.status(404).json({ message: "Invalid pharmacy" });
+  }
+
+  const existingRequest = await PhpRequest.findOne({ patientId, pharmacyId });
+  if(existingRequest) {
+    if(existingRequest.status == "false") {
+      return res.status(409).json({ message: "Request already exists" });
+    }else{
+      return res.status(409).json({ message: "Pharmacy is already present in the List" });
+    }
+  }
+
+  try {
+    await PhpRequest.create({
+      patientId,
+      pharmacyId,
+      status: "false",
+      addedDate,
+      addedTime,
+    });
+    res.status(201).json({ message: "Pharmacy request created successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};  
+
+const getPharmacyRequests = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const requests = await PhpRequest.find({
+      patientId,
+    }).select("-patientId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const pharmacies = [];
+    for (const request of requests) {
+      const pharmacyDetails = await Pharmacy.findOne({
+        pharmacyId: request.pharmacyId,
+      }).select("pharmacyName profilePic -_id");
+      if (pharmacyDetails) {
+        const pharmacy = {
+          ...request.toObject(),
+          ...pharmacyDetails.toObject(),
+        };
+        pharmacies.push(pharmacy);
+      }
+    }
+
+    res.status(200).json(pharmacies);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -890,4 +963,6 @@ module.exports = {
   getDoctorRequests,
   patientLabRequestCreate,
   getLaboratoryRequests,
+  patientPharmacyRequestCreate,
+  getPharmacyRequests,
 };
