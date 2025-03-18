@@ -279,6 +279,12 @@ app.post(
   patientController.patientPharmacyRequestCreate
 );
 
+app.get(
+  "/patient/pharmacy/request",
+  authenticateToken,
+  patientController.getPharmacyRequests
+);
+
 // Pharmacy routes
 app.post("/pharmacy/register", pharmacyController.pharmacyRegister);
 
@@ -324,6 +330,12 @@ app.post(
   "/pharmacy/request/accept",
   authenticateToken,
   pharmacyController.acceptPatientRequest
+);
+
+app.get(
+  "/pharmacy/patient/request",
+  authenticateToken,
+  pharmacyController.getPatientRequests
 );
 
 

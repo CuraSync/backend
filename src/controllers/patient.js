@@ -908,6 +908,40 @@ const patientPharmacyRequestCreate = async (req, res) => {
   }
 };  
 
+const getPharmacyRequests = async (req, res) => {
+  const patientId = req.user.id;
+
+  try {
+    const requests = await PhpRequest.find({
+      patientId,
+    }).select("-patientId -createdAt -updatedAt -__v");
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No request found" });
+    }
+
+    const pharmacies = [];
+    for (const request of requests) {
+      const pharmacyDetails = await Pharmacy.findOne({
+        pharmacyId: request.pharmacyId,
+      }).select("pharmacyName profilePic -_id");
+      if (pharmacyDetails) {
+        const pharmacy = {
+          ...request.toObject(),
+          ...pharmacyDetails.toObject(),
+        };
+        pharmacies.push(pharmacy);
+      }
+    }
+
+    res.status(200).json(pharmacies);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -930,4 +964,5 @@ module.exports = {
   patientLabRequestCreate,
   getLaboratoryRequests,
   patientPharmacyRequestCreate,
+  getPharmacyRequests,
 };
