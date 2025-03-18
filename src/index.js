@@ -273,6 +273,12 @@ app.get(
   patientController.getLaboratoryRequests
 );
 
+app.post(
+  "/pharmacy/request",
+  authenticateToken,
+  patientController.patientPharmacyRequestCreate
+);
+
 // Pharmacy routes
 app.post("/pharmacy/register", pharmacyController.pharmacyRegister);
 
