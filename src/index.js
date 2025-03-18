@@ -126,6 +126,7 @@ app.post(
   doctorController.getDoctorTimelineData
 );
 
+//Request section
 app.post(
   "/patient/request",
   authenticateToken,
@@ -384,3 +385,10 @@ app.get("/test/refresh-tokens", jwtTets.jwtRTokens);
 app.get("/", (req, res) => {
   res.json({ message: "Curasync Backend testing is alive" });
 });
+
+//Request section
+app.post(
+  "/laboratory/request/accept",
+  authenticateToken,
+  laboratoryController.acceptPatientRequest
+);

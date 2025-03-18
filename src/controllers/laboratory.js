@@ -1,10 +1,13 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const Laboratory = require("../models/laboratory");
+const mongoose = require("mongoose");
 
 const Patient = require("../models/patient");
 const PatientLabMessage = require("../models/patientLabMessage");
 const PatientLab = require("../models/patientLab");
+const PlRequest = require("../models/plRequest");
+
 const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 
 // Add these constants for encryption/decryption
@@ -312,6 +315,36 @@ const getLabPatientMessages = async (req, res) => {
   }
 };
 
+const acceptPatientRequest = async (req, res) => {
+  const {requestId} = req.body;
+  
+  //Validating ObjectId
+  if(!mongoose.Types.ObjectId.isValid(requestId)){
+    return res.status(400).json({message: "Invalid request Id"});
+  }
+
+  const request = await PlRequest.findById(requestId);
+  if(!request){
+    return res.status(404).json({message: "Request not found"});
+  }
+
+  if(request.status === "true"){
+    return res.status(400).json({message: "Request already accepted"});
+  }
+
+  try{
+    const {patientId, labId} = request;
+
+    await PatientLab.create({patientId, labId});
+
+    await PlRequest.updateOne({_id: requestId}, {status: "true"});
+    res.status(200).json({message: "Request accepted successfully"});
+  }catch(err){
+    console.log(err);
+    res.status(500).json({message: "Unexpected error occurred", error: err.message});
+  }
+};
+
 module.exports = {
   laboratoryRegister,
   laboratoryProfileUpdate,
@@ -320,4 +353,5 @@ module.exports = {
   getLaboratoryHomepageData,
   labSendMessageToPatient,
   getLabPatientMessages,
+  acceptPatientRequest,
 };
