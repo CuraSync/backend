@@ -319,6 +319,14 @@ app.post(
   pharmacyController.getPharmacyPatientMessages
 );
 
+// Request section
+app.post(
+  "/pharmacy/request/accept",
+  authenticateToken,
+  pharmacyController.acceptPatientRequest
+);
+
+
 // Laboratory routes
 app.post("/laboratory/register", laboratoryController.laboratoryRegister);
 

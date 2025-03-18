@@ -1,11 +1,13 @@
 const Pharmacy = require("../models/pharmacy");
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 
 const crypto = require("crypto");
 const Patient = require("../models/patient");
 const PatientPharmacyMessage = require("../models/patientPharmacyMessage");
 const { connectedUsers, getChatNamespace } = require("../config/webSocket");
 const PatientPharmacy = require("../models/patientPharmacy");
+const PhpRequest = require("../models/phpRequest");
 
 // Add these constants for encryption/decryption
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
@@ -311,6 +313,40 @@ const getPharmacyPatientMessages = async (req, res) => {
   }
 };
 
+const acceptPatientRequest = async (req, res) => {
+  const { requestId } = req.body;
+
+  //Validate ObjectID
+  if (!mongoose.Types.ObjectId.isValid(requestId)) {
+    return res.status(400).json({ message: "Invalid request ID" });
+  } 
+
+  const request = await PhpRequest.findById(requestId);
+  if (!request) {
+    return res.status(404).json({ message: "Request not found" });
+  }
+
+  if (request.status === "true") {
+    return res.status(400).json({ message: "Request already accepted" });
+  }
+
+  try{
+    const { patientId, pharmacyId } = request;
+
+    await PatientPharmacy.create({
+      patientId,
+      pharmacyId,
+    });
+
+    await PhpRequest.updateOne({ _id: requestId }, { status: "true" });
+    res.status(200).json({ message: "Request accepted successfully" });
+  }catch(error){
+    console.log(error);
+    res.status(500).json({ message: "Unexpected error occurred", error: error.message });
+  }
+  
+};
+
 module.exports = {
   pharmacyRegister,
   pharmacyProfileUpdate,
@@ -319,4 +355,5 @@ module.exports = {
   getPatientList,
   pharmacySendMessageToPatient,
   getPharmacyPatientMessages,
+  acceptPatientRequest,
 };
