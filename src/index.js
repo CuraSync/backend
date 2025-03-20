@@ -85,8 +85,6 @@ app.post(
   doctorController.enablePatientMessage
 );
 
-app.post("/doctor", authenticateToken, doctorController.addDoctor);
-
 app.get("/doctor/doctors", authenticateToken, doctorController.getDoctorList);
 
 // message section
@@ -186,15 +184,11 @@ app.get(
 
 app.get("/patient/doctors", authenticateToken, patientController.getDoctorList);
 
-app.post("/laboratory", authenticateToken, patientController.addLabortory);
-
 app.get(
   "/patient/laboratories",
   authenticateToken,
   patientController.getLaboratoryList
 );
-
-app.post("/pharmacy", authenticateToken, patientController.addPharmacy);
 
 app.get(
   "/patient/pharmacies",
@@ -337,7 +331,6 @@ app.get(
   authenticateToken,
   pharmacyController.getPatientRequests
 );
-
 
 // Laboratory routes
 app.post("/laboratory/register", laboratoryController.laboratoryRegister);

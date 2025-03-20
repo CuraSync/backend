@@ -213,36 +213,6 @@ const enablePatientMessage = async (req, res) => {
   }
 };
 
-const addDoctor = async (req, res) => {
-  const doctorId = req.user.id;
-  const { reciveDoctorId } = req.body;
-
-  if (!reciveDoctorId) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  const recipient = await Doctor.findOne({ doctorId: reciveDoctorId });
-  if (!recipient) {
-    return res.status(404).json({ message: "Invalid doctor recipient" });
-  }
-
-  const existingDoctorDoctor = await DoctorDoctor.findOne({
-    doctorId,
-    reciveDoctorId,
-  });
-  if (existingDoctorDoctor)
-    return res.status(409).json({ message: "Doctor is already in the list" });
-
-  try {
-    await DoctorDoctor.create({ doctorId, reciveDoctorId });
-    res.status(200).json({ message: "Doctor successfully added to the list" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unexpected error occurred", error: error.message });
-  }
-};
-
 const getDoctorList = async (req, res) => {
   const doctorId = req.user.id;
 
@@ -763,22 +733,24 @@ const doctorDoctorRequestCreate = async (req, res) => {
     doctorId,
     secondDoctorId,
   });
-  if (existingRequest){
-    if(existingRequest.status == "false"){
+  if (existingRequest) {
+    if (existingRequest.status == "false") {
       return res.status(409).json({ message: "Request is already present" });
-  }else{
-    return res.status(409).json({ message: "Doctor is already present in the List" });
+    } else {
+      return res
+        .status(409)
+        .json({ message: "Doctor is already present in the List" });
+    }
   }
-}
 
   try {
-    await DdRequest.create({ 
-      doctorId, 
+    await DdRequest.create({
+      doctorId,
       secondDoctorId,
       status: "false",
       addedDate,
-      addedTime
-     });
+      addedTime,
+    });
     res.status(200).json({ message: "Request sent successfully" });
   } catch (error) {
     res
@@ -787,13 +759,14 @@ const doctorDoctorRequestCreate = async (req, res) => {
   }
 };
 
-const acceptDoctorRequest = async (req, res) => { //accept doctor request by Doctor (patient for reference)
-  const {requestId} = req.body;
+const acceptDoctorRequest = async (req, res) => {
+  //accept doctor request by Doctor (patient for reference)
+  const { requestId } = req.body;
 
   // Validate ObjectId
-   if (!mongoose.Types.ObjectId.isValid(requestId)) {
-     return res.status(400).json({ message: "Invalid request ID format" });
-   }
+  if (!mongoose.Types.ObjectId.isValid(requestId)) {
+    return res.status(400).json({ message: "Invalid request ID format" });
+  }
 
   const request = await DdRequest.findById(requestId);
   if (!request) {
@@ -807,16 +780,20 @@ const acceptDoctorRequest = async (req, res) => { //accept doctor request by Doc
   try {
     const { doctorId, secondDoctorId } = request;
 
-    await DoctorDoctor.create({ 
-      doctorId, 
-      reciveDoctorId: secondDoctorId 
+    await DoctorDoctor.create({
+      doctorId,
+      reciveDoctorId: secondDoctorId,
     });
 
     await DdRequest.updateOne({ _id: requestId }, { status: "true" });
-    res.status(200).json({ message: "Request accepted and added to list successfully" });
-  }catch (error) {
+    res
+      .status(200)
+      .json({ message: "Request accepted and added to list successfully" });
+  } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Unexpected error occurred", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
   }
 };
 
@@ -895,7 +872,6 @@ module.exports = {
   getDoctorHomepageData,
   getPatientList,
   enablePatientMessage,
-  addDoctor,
   getDoctorList,
   getdoctorPatientMessages,
   doctorSendMessageToPatient,

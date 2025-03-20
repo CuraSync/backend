@@ -176,34 +176,6 @@ const getDoctorList = async (req, res) => {
   }
 };
 
-const addLabortory = async (req, res) => {
-  const patientId = req.user.id;
-  const { labId } = req.body;
-
-  if (!labId) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  const existingLab = await Laboratory.findOne({ labId });
-  if (!existingLab) {
-    return res.status(404).json({ message: "Invalid laboratory" });
-  }
-
-  try {
-    const existingPatientLab = await PatientLab.findOne({ patientId, labId });
-    if (existingPatientLab) {
-      return res.status(409).json({ message: "Lab already added" });
-    }
-
-    await PatientLab.create({ patientId, labId });
-    res.status(201).json({ message: "Lab added successfully" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unexpected error occurred", error: error.message });
-  }
-};
-
 const getLaboratoryList = async (req, res) => {
   const patientId = req.user.id;
 
@@ -231,36 +203,6 @@ const getLaboratoryList = async (req, res) => {
     }
 
     res.status(200).json(labs);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unexpected error occurred", error: error.message });
-  }
-};
-
-const addPharmacy = async (req, res) => {
-  const patientId = req.user.id;
-  const { pharmacyId } = req.body;
-
-  if (!pharmacyId) {
-    return res.status(400).json({ message: "Required fields are missing" });
-  }
-
-  const existingPharmacy = await Pharmacy.findOne({ pharmacyId });
-  if (!existingPharmacy) {
-    return res.status(404).json({ message: "Invalid pharmacy" });
-  }
-
-  try {
-    const existingPatientPharmacy = await PatientPharmacy.findOne({
-      patientId,
-      pharmacyId,
-    });
-    if (existingPatientPharmacy) {
-      return res.status(409).json({ message: "Pharmacy already added" });
-    }
-    await PatientPharmacy.create({ patientId, pharmacyId });
-    res.status(201).json({ message: "Pharmacy added successfully" });
   } catch (error) {
     res
       .status(500)
@@ -812,11 +754,13 @@ const patientLabRequestCreate = async (req, res) => {
   }
 
   const existingRequest = await PlRequest.findOne({ patientId, labId });
-  if(existingRequest) {
-    if(existingRequest.status == "false") {
+  if (existingRequest) {
+    if (existingRequest.status == "false") {
       return res.status(409).json({ message: "Request already exists" });
-    }else{
-      return res.status(409).json({ message: "Lab is already present in the List" });
+    } else {
+      return res
+        .status(409)
+        .json({ message: "Lab is already present in the List" });
     }
   }
 
@@ -884,11 +828,13 @@ const patientPharmacyRequestCreate = async (req, res) => {
   }
 
   const existingRequest = await PhpRequest.findOne({ patientId, pharmacyId });
-  if(existingRequest) {
-    if(existingRequest.status == "false") {
+  if (existingRequest) {
+    if (existingRequest.status == "false") {
       return res.status(409).json({ message: "Request already exists" });
-    }else{
-      return res.status(409).json({ message: "Pharmacy is already present in the List" });
+    } else {
+      return res
+        .status(409)
+        .json({ message: "Pharmacy is already present in the List" });
     }
   }
 
@@ -906,7 +852,7 @@ const patientPharmacyRequestCreate = async (req, res) => {
       .status(500)
       .json({ message: "Unexpected error occurred", error: error.message });
   }
-};  
+};
 
 const getPharmacyRequests = async (req, res) => {
   const patientId = req.user.id;
@@ -948,9 +894,7 @@ module.exports = {
   getPatientProfile,
   getPatientHomepageData,
   getDoctorList,
-  addLabortory,
   getLaboratoryList,
-  addPharmacy,
   getPharmacyList,
   patientSendMessageToDoctor,
   getPatientDoctorMessages,
