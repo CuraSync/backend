@@ -21,6 +21,7 @@ const PatientPharmacy = require("../models/patientPharmacy");
 const DpRequest = require("../models/dpRequest");
 const PlRequest = require("../models/plRequest");
 const PhpRequest = require("../models/phpRequest");
+const LabReport = require("../models/labReport");
 
 const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 const NONCE_LENGTH = parseInt(process.env.NONCE_LENGTH);
@@ -890,6 +891,148 @@ const getPharmacyRequests = async (req, res) => {
   }
 };
 
+const getPrescriptionData = async (req, res) => {
+  const { timelineId } = req.body;
+
+  if (!timelineId)
+    return res.status(400).json({ message: "Timeline ID is required" });
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(timelineId)) {
+    return res.status(400).json({ message: "Invalid timeline ID format" });
+  }
+
+  try {
+    const prescription = await Timeline.findById(timelineId);
+    if (!prescription)
+      return res.status(404).json({ message: "Prescription not found" });
+
+    if (prescription.type != "prescription") {
+      return res
+        .status(404)
+        .json({ message: "This record is not a prescription" });
+    }
+
+    const data = JSON.parse(decryptMessage(prescription.data));
+
+    res.status(200).json({
+      message: "Prescription data retrieved successfully",
+      doctorId: prescription.doctorId,
+      note: data.note,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const sharePrescription2Pharmacy = async (req, res) => {
+  const patientId = req.user.id;
+
+  const { pharmacyId, timelineId, addedDate, addedTime } = req.body;
+
+  if (!pharmacyId || !timelineId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(timelineId)) {
+    return res.status(400).json({ message: "Invalid timeline ID format" });
+  }
+  try {
+    // Verify that the pharmacy exists
+    const pharmacy = await Pharmacy.findOne({ pharmacyId });
+    if (!pharmacy) {
+      return res.status(404).json({ message: "Invalid pharmacy" });
+    }
+
+    // Verify that the prescription exists and is of type prescription
+    const prescription = await Timeline.findById(timelineId);
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    // Check if the timeline entry is actually a prescription
+    if (prescription.type !== "prescription") {
+      return res
+        .status(400)
+        .json({ message: "This record is not a prescription" });
+    }
+
+    const data = { timelineId: timelineId };
+    const encryptedData = encryptMessage(JSON.stringify(data));
+    const sender = "patient";
+
+    await PatientPharmacyMessage.create({
+      patientId,
+      pharmacyId,
+      type: "prescription",
+      sender,
+      data: encryptedData,
+      addedDate,
+      addedTime,
+    });
+    res.status(201).json({ message: "Prescription successfully transfered" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
+const shareReport2Timeline = async (req, res) => {
+  const patientId = req.user.id;
+
+  const { doctorId, reportId, addedDate, addedTime } = req.body;
+
+  if (!doctorId || !reportId || !addedDate || !addedTime) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(reportId)) {
+    return res.status(400).json({ message: "Invalid Lab report ID format" });
+  }
+  try {
+    // Verify that the pharmacy exists
+    const doctor = await Doctor.findOne({ doctorId });
+    if (!doctor) {
+      return res.status(404).json({ message: "Invalid doctor" });
+    }
+
+    // Verify that the prescription exists and is of type prescription
+    const report = await LabReport.findById(reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    // Verify report belongs to this patient
+    if (report.patientId !== patientId) {
+      return res.status(403).json({ message: "Unauthorized access to report" });
+    }
+
+    const data = { reportId: reportId, note: null };
+    const encryptedData = encryptMessage(JSON.stringify(data));
+    const sender = "patient";
+
+    await Timeline.create({
+      patientId,
+      doctorId,
+      type: "report",
+      sender,
+      data: encryptedData,
+      addedDate,
+      addedTime,
+    });
+    res.status(201).json({ message: "Lab Report successfully transferred" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   patientRegister,
   patientProfileUpdate,
@@ -911,4 +1054,7 @@ module.exports = {
   getLaboratoryRequests,
   patientPharmacyRequestCreate,
   getPharmacyRequests,
+  getPrescriptionData,
+  sharePrescription2Pharmacy,
+  shareReport2Timeline,
 };

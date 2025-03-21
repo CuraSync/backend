@@ -437,3 +437,27 @@ app.post(
   authenticateToken,
   visualizationController.generateVisualization
 );
+
+app.post(
+  "/prescription/data",
+  authenticateToken,
+  patientController.getPrescriptionData
+);
+
+app.post(
+  "/patient/prescription/pharmacy",
+  authenticateToken,
+  patientController.sharePrescription2Pharmacy
+);
+
+app.post(
+  "/patient/labreport/timeline",
+  authenticateToken,
+  patientController.shareReport2Timeline
+);
+
+app.post(
+  "/doctor/labreport/note",
+  authenticateToken,
+  doctorController.addNoteToReport
+);
