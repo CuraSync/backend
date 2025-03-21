@@ -18,6 +18,7 @@ const doctorController = require("./controllers/doctor");
 const patientController = require("./controllers/patient");
 const pharmacyController = require("./controllers/pharmacy");
 const laboratoryController = require("./controllers/laboratory");
+const visualizationController = require("./controllers/visualization");
 
 const app = express();
 app.use(express.json());
@@ -422,4 +423,17 @@ app.get(
   "/laboratory/patient/request",
   authenticateToken,
   laboratoryController.getPatientRequests
+);
+
+// Visualization section
+app.post(
+  "/labreport/visualization",
+  authenticateToken,
+  visualizationController.getVisualization
+);
+
+app.post(
+  "/labreport/visualization/generate",
+  authenticateToken,
+  visualizationController.generateVisualization
 );

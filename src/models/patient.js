@@ -12,6 +12,7 @@ const patientSchema = new mongoose.Schema(
     phoneNumber: { type: String, required: true },
     address: { type: String, required: true },
     dateOfBirth: { type: Date, required: true, immutable: true },
+    gender: { type: String, required: true },
     height: { type: Number, default: null },
     weight: { type: Number, default: null },
     bmi: { type: Number, default: null },
