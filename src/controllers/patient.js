@@ -34,7 +34,8 @@ const patientRegister = async (req, res) => {
     !req.body.password ||
     !req.body.phoneNumber ||
     !req.body.address ||
-    !req.body.dateOfBirth
+    !req.body.dateOfBirth ||
+    !req.body.gender
   ) {
     return res.status(400).json({ message: "Required fields are missing" });
   }
@@ -78,6 +79,7 @@ const patientRegister = async (req, res) => {
       phoneNumber: req.body.phoneNumber,
       address: req.body.address,
       dateOfBirth: req.body.dateOfBirth,
+      gender: req.body.gender,
     });
     res
       .status(201)
