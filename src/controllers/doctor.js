@@ -865,6 +865,44 @@ const getSentDoctorRequests = async (req, res) => {
   }
 };
 
+const addNoteToReport = async (req, res) => {
+  const { timelineId, note } = req.body;
+
+  if (!timelineId || !note)
+    return res.status(400).json({ message: "Required fields are missing" });
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(timelineId)) {
+    return res.status(400).json({ message: "Invalid timeline ID format" });
+  }
+
+  try {
+    const timeline = await Timeline.findById(timelineId);
+    if (!timeline) return res.status(404).json({ message: "Record not found" });
+
+    if (timeline.type != "report") {
+      return res
+        .status(400)
+        .json({ message: "This record is not a report type" });
+    }
+
+    const data = JSON.parse(decryptMessage(timeline.data));
+    data.note = note;
+
+    const encryptedData = encryptMessage(JSON.stringify(data));
+
+    await Timeline.updateOne({ _id: timelineId }, { data: encryptedData });
+
+    res.status(200).json({
+      message: "Note successfully added to the report",
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unexpected error occurred", error: error.message });
+  }
+};
+
 module.exports = {
   doctorRegister,
   doctorProfileUpdate,
@@ -885,4 +923,5 @@ module.exports = {
   acceptDoctorRequest,
   getDoctorRequests,
   getSentDoctorRequests,
+  addNoteToReport,
 };
