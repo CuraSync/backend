@@ -63,10 +63,6 @@ const generateVisualization = async (req, res) => {
     return res.status(400).json({ message: "Patient is not found" });
   }
 
-  if (!report) {
-    return res.status(400).json({ message: "Report is not found" });
-  }
-
   try {
     const now = new Date();
     const birth = new Date(patient.dateOfBirth);
@@ -82,11 +78,14 @@ const generateVisualization = async (req, res) => {
 
     const gender = patient.gender;
 
-    const response = await axios.post("http://127.0.0.1:5001/visualization", {
-      image_url: report.url,
-      age: ageInYears,
-      gender: gender,
-    });
+    const response = await axios.post(
+      `${process.env.VISUALIZATION_URL}/visualization`,
+      {
+        image_url: report.url,
+        age: ageInYears,
+        gender: gender,
+      }
+    );
 
     await LabReport.findByIdAndUpdate(reportId, {
       visualization: response.data.explanation,
@@ -108,6 +107,11 @@ const generateVisualization = async (req, res) => {
         return res.status(422).json({
           message: "Report type does not support.",
           error: errorData.error || "Type not supported",
+        });
+      } else {
+        return res.status(error.response.status || 500).json({
+          message: "Error in the visualization",
+          error: errorData.error || error.message || "Unknown error",
         });
       }
     }
