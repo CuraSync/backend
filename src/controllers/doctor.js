@@ -217,19 +217,28 @@ const getDoctorList = async (req, res) => {
   const doctorId = req.user.id;
 
   try {
-    const doctorDoctors = await DoctorDoctor.find({ doctorId }).select(
+    const sentDoctorDoctors = await DoctorDoctor.find({ doctorId }).select(
       "-_id -doctorId -createdAt -updatedAt -__v"
     );
 
-    if (!doctorDoctors.length) {
+    const receivedDoctorDoctors = await DoctorDoctor.find({
+      reciveDoctorId: doctorId,
+    }).select("-_id -reciveDoctorId -createdAt -updatedAt -__v");
+
+    const allDoctorDoctors = [...sentDoctorDoctors, ...receivedDoctorDoctors];
+
+    if (!allDoctorDoctors.length) {
       return res.status(404).json({ message: "No doctors found" });
     }
 
     const doctors = [];
-    for (const doctorDoctor of doctorDoctors) {
+    for (const doctorDoctor of allDoctorDoctors) {
+      const searchId = doctorDoctor.reciveDoctorId || doctorDoctor.doctorId;
+
       const doctorDetails = await Doctor.findOne({
-        doctorId: doctorDoctor.reciveDoctorId,
+        doctorId: searchId,
       }).select("firstName lastName profilePic -_id");
+
       if (doctorDetails) {
         const doctor = {
           ...doctorDoctor.toObject(),
@@ -724,26 +733,39 @@ const doctorDoctorRequestCreate = async (req, res) => {
     return res.status(400).json({ message: "Required fields are missing" });
   }
 
+  if (doctorId === secondDoctorId) {
+    return res.status(400).json({ message: "Cannot send request to yourself" });
+  }
+
   const recipient = await Doctor.findOne({ doctorId: secondDoctorId });
   if (!recipient) {
     return res.status(404).json({ message: "Invalid doctor recipient" });
   }
 
-  const existingRequest = await DdRequest.findOne({
-    doctorId,
-    secondDoctorId,
-  });
-  if (existingRequest) {
-    if (existingRequest.status == "false") {
-      return res.status(409).json({ message: "Request is already present" });
-    } else {
-      return res
-        .status(409)
-        .json({ message: "Doctor is already present in the List" });
-    }
-  }
-
   try {
+    const existingRequest = await DdRequest.findOne({
+      doctorId,
+      secondDoctorId,
+    });
+
+    const existingRequest1 = await DdRequest.findOne({
+      secondDoctorId: doctorId,
+      doctorId: secondDoctorId,
+    });
+
+    if (existingRequest || existingRequest1) {
+      if (
+        (existingRequest && existingRequest.status === "false") ||
+        (existingRequest1 && existingRequest1.status === "false")
+      ) {
+        return res.status(409).json({ message: "Request is already pending" });
+      } else {
+        return res
+          .status(409)
+          .json({ message: "Doctor is already present in the List" });
+      }
+    }
+
     await DdRequest.create({
       doctorId,
       secondDoctorId,
