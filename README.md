@@ -2,7 +2,10 @@
 
 ## Overview
 
-Curasync is a comprehensive healthcare platform that connects patients, doctors, pharmacies, and laboratories in a unified digital ecosystem. This repository contains the backend API that powers the Curasync application, built with Node.js and Express.js.
+**Curasync** is a comprehensive healthcare platform that connects patients, doctors, pharmacies, and laboratories in a unified digital ecosystem. This repository contains the backend API that powers the Curasync application, built with Node.js and Express.js.
+
+The backend is structured as a standalone microservice and is successfully deployed on **Render**.
+You can access it at: https://curasync-backend.onrender.com/
 
 ## Technology Stack
 - **Runtime**: Node.js
